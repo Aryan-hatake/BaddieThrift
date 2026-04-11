@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand Color Palette ── */
+  --color-background:               #f9f9f9;
+  --color-surface:                  #f9f9f9;
+  --color-on-surface:               #1b1b1b;
+  --color-on-background:            #1b1b1b;
+
+  --color-primary:                  #506600;
+  --color-on-primary:               #ffffff;
+  --color-primary-container:        #ccff00;
+  --color-on-primary-container:     #5b7300;
+  --color-primary-fixed:            #c3f400;
+  --color-primary-fixed-dim:        #abd600;
+  --color-on-primary-fixed:         #161e00;
+  --color-on-primary-fixed-variant: #3c4d00;
+  --color-inverse-primary:          #abd600;
+
+  --color-secondary:                #5e5e5e;
+  --color-on-secondary:             #ffffff;
+  --color-secondary-container:      #e2e2e2;
+  --color-on-secondary-container:   #646464;
+  --color-secondary-fixed:          #e2e2e2;
+  --color-secondary-fixed-dim:      #c6c6c6;
+  --color-on-secondary-fixed:       #1b1b1b;
+  --color-on-secondary-fixed-variant: #474747;
+
+  --color-tertiary:                 #5e5e5e;
+  --color-on-tertiary:              #ffffff;
+  --color-tertiary-container:       #ededed;
+  --color-on-tertiary-container:    #6b6b6b;
+  --color-tertiary-fixed:           #e2e2e2;
+  --color-tertiary-fixed-dim:       #c6c6c6;
+  --color-on-tertiary-fixed:        #1b1b1b;
+  --color-on-tertiary-fixed-variant: #474747;
+
+  --color-surface-bright:           #f9f9f9;
+  --color-surface-dim:              #dadada;
+  --color-surface-tint:             #506600;
+  --color-surface-variant:          #e2e2e2;
+  --color-surface-container:        #eeeeee;
+  --color-surface-container-low:    #f3f3f3;
+  --color-surface-container-high:   #e8e8e8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-highest:#e2e2e2;
+  --color-on-surface-variant:       #444933;
+
+  --color-inverse-surface:          #303030;
+  --color-inverse-on-surface:       #f1f1f1;
+
+  --color-outline:                  #747a60;
+  --color-outline-variant:          #c4c9ac;
+
+  --color-error:                    #ba1a1a;
+  --color-on-error:                 #ffffff;
+  --color-error-container:          #ffdad6;
+  --color-on-error-container:       #93000a;
+
+  /* ── Typography ── */
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body:     "Inter", sans-serif;
+  --font-label:    "Space Grotesk", sans-serif;
+
+  /* ── Shape: Brutalist zero-radius ── */
+  --radius-none: 0px;
+  --radius-sm:   0px;
+  --radius-md:   0px;
+  --radius-lg:   0px;
+  --radius-xl:   0px;
+  --radius-full: 9999px;
+}
+
+/* ─────────────────────────────────────────
+   GLOBAL BASE STYLES
+───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  cursor: crosshair;
+  background-color: #f9f9f9;
+  color: #1b1b1b;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, nav, button {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+/* ─────────────────────────────────────────
+   GRAIN OVERLAY
+   pointer-events: none so it never blocks clicks
+───────────────────────────────────────── */
+.grain-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 300px 300px;
+}
+
+/* ─────────────────────────────────────────
+   HOLLOW TEXT (outline only)
+───────────────────────────────────────── */
+.text-outline {
+  -webkit-text-stroke: 1.5px currentColor;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─────────────────────────────────────────
+   GLITCH KEYFRAMES
+   Used by Framer Motion on the button,
+   kept here as a fallback utility too.
+───────────────────────────────────────── */
+@keyframes glitch {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-2px,  2px); }
+  40%  { transform: translate(-2px, -2px); }
+  60%  { transform: translate( 2px,  2px); }
+  80%  { transform: translate( 2px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.glitch-hover:hover {
+  animation: glitch 0.2s linear infinite;
+}
+
+/* ─────────────────────────────────────────
+   VERTICAL TEXT
+───────────────────────────────────────── */
+.vertical-lr {
+  writing-mode: vertical-lr;
+}
+
+/* ─────────────────────────────────────────
+   TECHNICAL BORDER
+   Top-left corner → 2px black bracket
+   Bottom-right corner → 2px neon lime bracket
+───────────────────────────────────────── */
+.technical-border {
+  border: 1px solid rgba(27, 27, 27, 0.1);
+  position: relative;
+}
+
+.technical-border::before {
+  content: "";
+  position: absolute;
+  top:  -1px;
+  left: -1px;
+  width:  16px;
+  height: 16px;
+  border-top:  2px solid #1b1b1b;
+  border-left: 2px solid #1b1b1b;
+}
+
+.technical-border::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right:  -1px;
+  width:  16px;
+  height: 16px;
+  border-bottom: 2px solid #ccff00;
+  border-right:  2px solid #ccff00;
+}
