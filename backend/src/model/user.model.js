@@ -13,18 +13,23 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, "password is required"],
+    required: function(){
+      console.log(this)
+      return !this.googleId
+    },
     select: false,
   },
   contactNo: {
     type: Number,
-    required: [true, "contact number is required"],
   },
   role: {
     type: String,
-    required: [true, "role is required"],
+    default:"buyer",
     enum: ["buyer", "seller"],
   },
+  googleId:{
+    type:String
+  }
 });
 
 userSchema.pre("save", async function () {
@@ -34,10 +39,12 @@ userSchema.pre("save", async function () {
 });
 
 userSchema.methods.comparePass = async function (password) {
+  console.log(password)
   const user = await userModel.findById(this._id).select("+password")
-  return await bcrypt.compare(password, user.password);
+  if(user.googleId) return true;
+   return   await bcrypt.compare(password, user.password);
 };
 
-const userModel = mongoose.model("user", userSchema);
+const userModel = mongoose.model("users", userSchema);
 
 export default userModel;

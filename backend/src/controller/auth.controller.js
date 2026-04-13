@@ -1,12 +1,13 @@
 import userModel from "../model/user.model.js";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
-import passport from 'passport'
-
+import passport from "passport";
 
 async function register(req, res) {
   try {
-    const { fullName, password, email, contactNo, isSeller } = req.body;
+    const { fullName, password, email, contactNo , isSeller} = req.body;
+
+
     const userExist = await userModel.findOne({
       $or: [{ email }, { contactNo }],
     });
@@ -26,15 +27,14 @@ async function register(req, res) {
       email,
       contactNo,
       password,
-      role: "buyer",
+      role: !isSeller ? email.endsWith("@seller.com") ? "seller" : "buyer" : "seller",
     });
-
 
     const token = jwt.sign(
       {
         id: user._id,
       },
-       config.JWTSecret,
+      config.JWTSecret,
       { expiresIn: "3h" },
     );
 
@@ -68,13 +68,17 @@ async function login(req, res) {
     });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "invalid credentials" });
+      return res
+        .status(400)
+        .json({ success: false, message: "invalid credentials" });
     }
-
+     
     const isPassValid = await user.comparePass(password);
 
     if (!isPassValid) {
-      return res.status(400).json({ success: false, message: "Invalid Credentials" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid Credentials" });
     }
 
     const token = jwt.sign({ id: user._id }, config.JWTSecret, {
@@ -89,8 +93,7 @@ async function login(req, res) {
       user,
     });
   } catch (err) {
-
-    console.log(err)
+    console.log(err);
     res.status(400).json({
       success: false,
       message: "user failed in login",
@@ -98,10 +101,27 @@ async function login(req, res) {
     });
   }
 }
-async function google(req,res){
-    
-     console.log(req.user)
-     res.redirect("http://localhost:5173/")
+async function google(req, res) {
+  const { id } = req.user;
+  const fullName = req.user.displayName;
+  const email = req.user.emails[0].value;
 
+  let user = await userModel.findOne({email});
+
+  if(!user){
+    user = await userModel.create({
+      fullName,
+      email,
+      googleId:id    
+    })
+  }
+
+  const token = jwt.sign({
+    id:user._id
+  },config.JWTSecret)
+  
+  res.cookie("token",token)
+
+  res.redirect("http://localhost:5173/");
 }
 export default { register, login, google };
