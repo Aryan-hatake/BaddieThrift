@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 import Register from "../features/auth/UI/Register";
 import Login from "../features/auth/UI/Login";
+import CreateProduct from "../features/products/UI/pages/CreateProduct";
+import SellerInventory from "../features/products/UI/pages/SellerInventory";
 
 export const router = createBrowserRouter([
     {
@@ -14,5 +16,13 @@ export const router = createBrowserRouter([
     {
         path: "/login",
         element: <Login />
+    },
+    {
+        path: "/seller/create-product",
+        element: <CreateProduct />
+    },
+    {
+        path: "/seller/inventory",
+        element: <SellerInventory />
     },
 ])

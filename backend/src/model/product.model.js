@@ -26,6 +26,19 @@ const productSchema = new mongoose.Schema({
             enum:["INR","JPY","GBP","USD"]
         }
     },
+    stock:{
+        type:Number,
+        required:[true, "stock is required"]
+    },
+    sku:{
+        type:String,
+        required:[true, "sku is required"]
+    },
+    status:{
+        type:String,
+        enum:["active","low_stock","draft"],
+        default:"draft"
+    },
     images:[String]
 },{timestamps:true})
 

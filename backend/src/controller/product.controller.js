@@ -7,8 +7,8 @@ async function createProduct(req, res) {
       success: false,
       message: "forbidden route",
     });
-
-  const { title, description, price_Amount, price_Currency } = req.body;
+  console.log(req.files)
+  const { title, description, price: { price_Amount, price_Currency }, stock, sku, status } = req.body;
 
   const photos = req.files;
 
@@ -27,13 +27,32 @@ async function createProduct(req, res) {
       currency: price_Currency,
     },
     images: uploadedPhotos,
+    stock,
+    sku,
+    status
   });
 
   res.status(201).json({
-    success:true,
-    message:"product created successfully",
+    success: true,
+    message: "product created successfully",
     product
   })
 }
 
-export default { createProduct };
+async function getAllSellerProducts(req, res) {
+  if (!req.isSeller)
+    return res.status(403).json({
+      success: false,
+      message: "forbidden route",
+    });
+
+  const allProducts = await productModel.find({ seller: req.userId })
+
+  res.status(200).json({
+    success: false,
+    message: "Hey seller! all your products fetched successfully",
+    allProducts
+  })
+}
+
+export default { createProduct, getAllSellerProducts };
