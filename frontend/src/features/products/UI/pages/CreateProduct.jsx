@@ -21,6 +21,8 @@ const CreateProduct = () => {
     navigate(-1);
   };
 
+  
+
   /* ── Live uptime clock (cosmetic, matches design) ── */
   const [uptime, setUptime] = React.useState("000:00:00");
   React.useEffect(() => {
