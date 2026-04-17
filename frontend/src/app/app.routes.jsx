@@ -19,17 +19,24 @@ export const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/seller/create-product",
-    element: (
-      <Protected>
-        <CreateProduct />
-      </Protected>
-    ),
-  },
-  {
-    path: "/seller/inventory",
-    element: <Protected>
-        <SellerInventory/>
-    </Protected>,
+    path: "/seller",
+    children: [
+      {
+        path: "/seller/create-product",
+        element: (
+          <Protected>
+            <CreateProduct />
+          </Protected>
+        ),
+      },
+      {
+        path: "/seller/inventory",
+        element: (
+          <Protected>
+            <SellerInventory />
+          </Protected>
+        ),
+      },
+    ],
   },
 ]);

@@ -124,4 +124,13 @@ async function google(req, res) {
 
   res.redirect("http://localhost:5173/");
 }
-export default { register, login, google };
+async function getMe(req,res) {
+  const user = req.user
+
+  res.status(200).json({
+    success:true,
+    message:"user hydrated successfully",
+    user
+  })
+}
+export default { register, login, google, getMe };

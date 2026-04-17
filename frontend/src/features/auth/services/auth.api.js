@@ -15,3 +15,8 @@ export const login = async(email,contactNo, password)=>{
     const res = await api.post("/login",{ email,contactNo, password })
     return res.data
 }
+
+export async function getMe() {
+    const res = await api.get("/getMe");
+    return res.data
+}

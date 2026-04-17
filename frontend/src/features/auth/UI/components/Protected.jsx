@@ -19,7 +19,8 @@ const Protected = ({ children }) => {
   }, []);
 
   
-  return <>{children}</>;
+
+  return children;
 };
 
 export default Protected;
