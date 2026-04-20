@@ -7,6 +7,7 @@ import config from './config/config.js';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser'
 import productRouter from './routes/product.route.js';
+import cartRouter from './routes/cart.route.js';
 
 const app = express()
 
@@ -35,5 +36,6 @@ app.get("/health",(req,res)=>{
 })
 app.use("/api/auth",authRouter)
 app.use("/api/product",productRouter)
+app.use("/api/cart",cartRouter)
 
 export default app;
