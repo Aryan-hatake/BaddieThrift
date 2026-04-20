@@ -4,6 +4,7 @@ import Login from "../features/auth/UI/Login";
 import CreateProduct from "../features/products/UI/pages/CreateProduct";
 import SellerInventory from "../features/products/UI/pages/SellerInventory";
 import ProductCatalog from "../features/products/UI/pages/ProductCatalog";
+import ProductDetails from "../features/products/UI/pages/ProductDetails";
 import Protected from "../features/auth/UI/components/Protected";
 
 export const router = createBrowserRouter([
@@ -14,6 +15,10 @@ export const router = createBrowserRouter([
   {
     path: "/catalog",
     element: <ProductCatalog />,
+  },
+  {
+    path: "/product/:id",
+    element: <ProductDetails />,
   },
   {
     path: "/register",

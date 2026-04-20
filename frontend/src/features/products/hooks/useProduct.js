@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
-import { setError, setLoading, setProducts, setCatalogProducts } from '../store/product.slice';
-import { createProduct, getSellerProducts, getAllProducts } from '../services/product.api';
+import { setError, setLoading, setProducts, setCatalogProducts, setSelectedProduct } from '../store/product.slice';
+import { createProduct, getSellerProducts, getAllProducts, getProductDetails } from '../services/product.api';
 
 export function useProduct() {
 
@@ -59,6 +59,19 @@ export function useProduct() {
          dispatch(setLoading(false))
       }
    }
+   async function handleProductDetails(id) {
+      try{
+         dispatch(setLoading(true))
+         const response = await getProductDetails(id);
+         dispatch(setSelectedProduct(response?.product ?? response))
+      }
+      catch(err){
+         dispatch(setError(err?.message ?? err))
+      }
+      finally{
+         dispatch(setLoading(false))
+      }
+   }
 
-   return { handleCreateProduct, handleSellerProducts, handleGetAllProducts }
+   return { handleCreateProduct, handleSellerProducts, handleGetAllProducts , handleProductDetails }
 }

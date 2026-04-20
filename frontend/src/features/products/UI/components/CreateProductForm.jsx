@@ -506,6 +506,304 @@ const StyleInjector = () => (
 );
 
 /* ─────────────────────────────────────────
+   VariantCard — one card per variant entry
+   ───────────────────────────────────────── */
+const VariantCard = ({
+  field,
+  index,
+  register,
+  errors,
+  control,
+  variantImages,
+  setVariantImages,
+  setIsFileSizeExceeded,
+  removeVariant,
+  appendVariant,
+  variantFieldsLength,
+}) => {
+  // Nested field array for attribute key-value pairs
+  const {
+    fields: attrFields,
+    append: appendAttr,
+    remove: removeAttr,
+  } = useFieldArray({ control, name: `variants.${index}.attribute` });
+
+  return (
+    <div className="p-4 border-2 border-black/10 bg-[#f8f8f8] relative">
+      {/* VAR badge */}
+      <span
+        className="absolute top-3 right-3 bg-black text-white text-[8px] font-black px-1.5 py-0.5 uppercase tracking-[0.2em]"
+        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+      >
+        VAR_{String(index + 1).padStart(2, "0")}
+      </span>
+
+      {/* ── Attributes ── */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Attributes
+            </span>
+            <span
+              className="bg-black text-[#ccff00] text-[7px] font-black px-1.5 py-0.5 uppercase tracking-wider"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              MAP
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => appendAttr({ key: "", value: "" })}
+            className="flex items-center gap-1 border border-black px-2 py-1 text-[9px] font-black uppercase tracking-widest hover:bg-[#ccff00] transition-colors"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            <span className="material-symbols-outlined text-xs leading-none">add</span>
+            Add Pair
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {attrFields.map((attrField, attrIdx) => {
+           
+           return( <div key={attrField.id} className="flex items-start gap-2">
+              {/* Key */}
+              <div className="flex-1 flex flex-col gap-0.5">
+                {attrIdx === 0 && (
+                  <span
+                    className="text-[9px] font-black uppercase tracking-widest text-[#5e5e5e]/60 mb-0.5"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    KEY
+                  </span>
+                )}
+                <input
+                  type="text"
+                  {...register(`variants.${index}.attribute.${attrIdx}.key`, {
+                    required: { value: true, message: "key required" },
+                  })}
+                  placeholder="e.g. color"
+                  className={
+                    errors.variants?.[index]?.attribute?.[attrIdx]?.key
+                      ? inputError
+                      : inputBase
+                  }
+                  aria-label={`Attribute key ${attrIdx + 1}`}
+                />
+                <FieldError
+                  message={errors.variants?.[index]?.attribute?.[attrIdx]?.key?.message}
+                />
+              </div>
+
+              {/* Arrow separator */}
+              <span
+                className="mt-3 text-[#5e5e5e]/40 font-black text-sm select-none shrink-0"
+                style={{ lineHeight: "2.75rem" }}
+              >
+                →
+              </span>
+
+              {/* Value */}
+              <div className="flex-1 flex flex-col gap-0.5">
+                {attrIdx === 0 && (
+                  <span
+                    className="text-[9px] font-black uppercase tracking-widest text-[#5e5e5e]/60 mb-0.5"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    VALUE
+                  </span>
+                )}
+                <input
+                  type="text"
+                  {...register(`variants.${index}.attribute.${attrIdx}.value`, {
+                    required: { value: true, message: "value required" },
+                  })}
+                  placeholder="e.g. red"
+                  className={
+                    errors.variants?.[index]?.attribute?.[attrIdx]?.value
+                      ? inputError
+                      : inputBase
+                  }
+                  aria-label={`Attribute value ${attrIdx + 1}`}
+                />
+                <FieldError
+                  message={errors.variants?.[index]?.attribute?.[attrIdx]?.value?.message}
+                />
+              </div>
+
+              {/* Remove pair button */}
+              {attrFields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeAttr(attrIdx)}
+                  className="mt-3 p-2 border border-black/20 text-[#5e5e5e] hover:bg-[#ba1a1a] hover:border-[#ba1a1a] hover:text-white transition-colors shrink-0"
+                  style={{ lineHeight: "1.75rem" }}
+                  aria-label="Remove attribute pair"
+                >
+                  <span className="material-symbols-outlined text-sm leading-none block">
+                    close
+                  </span>
+                </button>
+              )}
+            </div>)
+          })}
+        </div>
+      </div>
+
+      {/* ── Stock + Price row ── */}
+      <div className="grid grid-cols-[1fr_1.6fr_auto] gap-3 mb-1">
+        {/* Stock */}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between mb-1">
+            <label
+              htmlFor={`variant-stock-${field.id}`}
+              className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Stock
+            </label>
+            {errors.variants?.[index]?.stock && (
+              <span
+                className="text-[8px] font-black tracking-[0.15em] uppercase bg-[#ba1a1a] text-white px-1.5 py-0.5"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                REQ
+              </span>
+            )}
+          </div>
+          <input
+            id={`variant-stock-${field.id}`}
+            type="number"
+            min={0}
+            {...register(`variants.${index}.stock`, {
+              required: { value: true, message: "stock is required" },
+              min: { value: 0, message: "cannot be negative" },
+              valueAsNumber: true,
+            })}
+            placeholder="0"
+            className={`${
+              errors.variants?.[index]?.stock ? inputError : inputBase
+            } font-bold`}
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            aria-invalid={!!errors.variants?.[index]?.stock}
+          />
+          <FieldError message={errors.variants?.[index]?.stock?.message} />
+        </div>
+
+        {/* Price Amount */}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between mb-1">
+            <label
+              htmlFor={`variant-price-${field.id}`}
+              className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Price
+            </label>
+            {errors.variants?.[index]?.price?.priceAmount && (
+              <span
+                className="text-[8px] font-black tracking-[0.15em] uppercase bg-[#ba1a1a] text-white px-1.5 py-0.5"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                REQ
+              </span>
+            )}
+          </div>
+          <input
+            id={`variant-price-${field.id}`}
+            type="number"
+            step="0.01"
+            min={0}
+            {...register(`variants.${index}.price.priceAmount`, {
+              required: { value: true, message: "price is required" },
+              min: { value: 0.01, message: "must be > 0" },
+              valueAsNumber: true,
+            })}
+            placeholder="0.00"
+            className={`${
+              errors.variants?.[index]?.price?.priceAmount ? inputError : inputBase
+            } font-bold`}
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            aria-invalid={!!errors.variants?.[index]?.price?.priceAmount}
+          />
+          <FieldError message={errors.variants?.[index]?.price?.priceAmount?.message} />
+        </div>
+
+        {/* Currency */}
+        <div className="flex flex-col gap-1 min-w-[80px]">
+          <label
+            htmlFor={`variant-currency-${field.id}`}
+            className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e] mb-1"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            Currency
+          </label>
+          <div className="relative">
+            <select
+              id={`variant-currency-${field.id}`}
+              {...register(`variants.${index}.price.priceCurrency`)}
+              className={`${inputBase} text-sm font-bold uppercase appearance-none cursor-pointer pr-8`}
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              <option value="INR">INR</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+            </select>
+            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#1b1b1b] text-sm">
+              unfold_more
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Variant Image Grid ── */}
+      <VariantImageGrid
+        variantIndex={index}
+        images={variantImages[index]}
+        onUpdate={setVariantImages}
+        setIsFileSizeExceeded={setIsFileSizeExceeded}
+      />
+
+      {/* ── Row Actions ── */}
+      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-black/10">
+        {variantFieldsLength > 1 && (
+          <button
+            type="button"
+            onClick={() => removeVariant(index)}
+            className="flex items-center gap-1 border-2 border-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#ba1a1a] hover:border-[#ba1a1a] hover:text-white transition-colors"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            <span className="material-symbols-outlined text-sm leading-none">delete</span>
+            Remove
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() =>
+            appendVariant({
+              attribute: [{ key: "", value: "" }],
+              stock: 0,
+              price: { priceAmount: "", priceCurrency: "INR" },
+              images: [],
+            })
+          }
+          className="flex items-center gap-1 bg-[#ccff00] text-black font-black text-[10px] uppercase tracking-[0.2em] px-3 py-2 hover:bg-[#506600] hover:text-white transition-colors"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          <span className="material-symbols-outlined text-sm leading-none">add</span>
+          Add Variant
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────
    Main Form Component
    ───────────────────────────────────────── */
 const CreateProductForm = ({ onSubmit, onDiscard }) => {
@@ -519,7 +817,12 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
   } = useForm({
     defaultValues: {
       images: [],
-      variants: [{ type: "", options: "", images: [] }],
+      variants: [{
+        attribute:[ { key: "", value: "" }],
+        stock: 0,
+        price: { priceAmount: "", priceCurrency: "INR" },
+        images: [],
+      }],
     },
   });
 
@@ -576,15 +879,22 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
     try {
       const preparedData = {
         ...data,
-        variants: (data.variants ?? []).map(({ type, options }, idx) => ({
-          type,
-          options: String(options || "")
-            .split(/[\r\n,]+/)
-            .map((v) => v.trim())
-            .filter(Boolean),
-          // Attach variant image File objects (caller uploads to CDN / appends to FormData)
-          images: (variantImages[idx] ?? []).filter(Boolean).map((img) => img.file),
-        })),
+        variants: (data.variants ?? []).map((variant, idx) => {
+          // Convert [{key,value}] pairs to a Map-like object
+          const attributeMap = {};
+          (variant.attribute ?? []).forEach(({ key, value }) => {
+            if (key?.trim()) attributeMap[key.trim()] = value?.trim() ?? "";
+          });
+          return {
+            attribute: attributeMap,
+            stock: Number(variant.stock ?? 0),
+            price: {
+              priceAmount: Number(variant.price?.priceAmount ?? 0),
+              priceCurrency: variant.price?.priceCurrency ?? "INR",
+            },
+            images: (variantImages[idx] ?? []).filter(Boolean).map((img) => img.file),
+          };
+        }),
       };
 
       onSubmit(preparedData);
@@ -1014,128 +1324,24 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
           <SectionHeader
             num="04"
             title="Variant Config"
-            subtitle="[ ADD TYPE + VALUES + IMAGE URLS ]"
+            subtitle="[ ATTRIBUTES · STOCK · PRICE · IMAGES ]"
           />
           <div className="space-y-4">
             {variantFields.map((field, index) => (
-              <div
+              <VariantCard
                 key={field.id}
-                className="p-4 border-2 border-black/10 bg-[#f8f8f8] relative"
-              >
-                {/* Row badge */}
-                <span
-                  className="absolute top-3 right-3 bg-black text-white text-[8px] font-black px-1.5 py-0.5 uppercase tracking-[0.2em]"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  VAR_{String(index + 1).padStart(2, "0")}
-                </span>
-
-                <div className="grid gap-4 md:grid-cols-[1.3fr_1.7fr] mt-1">
-                  {/* Variant Type */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <label
-                        htmlFor={`variant-type-${field.id}`}
-                        className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        Variant Type
-                      </label>
-                      {errors.variants?.[index]?.type && (
-                        <span
-                          className="text-[8px] font-black tracking-[0.15em] uppercase bg-[#ba1a1a] text-white px-1.5 py-0.5"
-                          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                        >
-                          REQUIRED
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      id={`variant-type-${field.id}`}
-                      type="text"
-                      {...register(`variants.${index}.type`, {
-                        required: { value: true, message: "variant type is required" },
-                      })}
-                      placeholder="e.g. Color / Size / Material"
-                      className={errors.variants?.[index]?.type ? inputError : inputBase}
-                      aria-invalid={!!errors.variants?.[index]?.type}
-                    />
-                    <FieldError message={errors.variants?.[index]?.type?.message} />
-                  </div>
-
-                  {/* Variant Options */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <label
-                        htmlFor={`variant-options-${field.id}`}
-                        className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        Values 
-                      </label>
-                      {errors.variants?.[index]?.options && (
-                        <span
-                          className="text-[8px] font-black tracking-[0.15em] uppercase bg-[#ba1a1a] text-white px-1.5 py-0.5"
-                          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                        >
-                          REQUIRED
-                        </span>
-                      )}
-                    </div>
-                    <textarea
-                      id={`variant-options-${field.id}`}
-                      rows={4}
-                      {...register(`variants.${index}.options`)}
-                      placeholder={`One value per line or comma-separated\nXS\nS\nhttps://cdn.example.com/red.jpg`}
-                      className={`${
-                        errors.variants?.[index]?.options ? inputError : inputBase
-                      } resize-none`}
-                      aria-invalid={!!errors.variants?.[index]?.options}
-                    />
-                    <FieldError message={errors.variants?.[index]?.options?.message} />
-                    <p
-                      className="text-[9px] font-bold tracking-widest text-[#5e5e5e]/60 uppercase flex items-center gap-1 mt-0.5"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      <span className="material-symbols-outlined text-[12px]">info</span>
-                      Separate entries with commas or new lines
-                    </p>
-                  </div>
-                  {/* Variant Images — drag-and-drop uploader */}
-                </div>
-
-                {/* Variant image grid — spans full width below the two columns */}
-                <VariantImageGrid
-                  variantIndex={index}
-                  images={variantImages[index]}
-                  onUpdate={setVariantImages}
-                  setIsFileSizeExceeded={setIsFileSizeExceeded}
-                />
-
-                {/* Row Actions */}
-                <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-black/10">
-                  {variantFields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeVariant(index)}
-                      className="flex items-center gap-1 border-2 border-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#ba1a1a] hover:border-[#ba1a1a] hover:text-white transition-colors"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      <span className="material-symbols-outlined text-sm leading-none">delete</span>
-                      Remove
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => appendVariant({ type: "", options: "" })}
-                    className="flex items-center gap-1 bg-[#ccff00] text-black font-black text-[10px] uppercase tracking-[0.2em] px-3 py-2 hover:bg-[#506600] hover:text-white transition-colors"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    <span className="material-symbols-outlined text-sm leading-none">add</span>
-                    Add Variant
-                  </button>
-                </div>
-              </div>
+                field={field}
+                index={index}
+                register={register}
+                errors={errors}
+                control={control}
+                variantImages={variantImages}
+                setVariantImages={setVariantImages}
+                setIsFileSizeExceeded={setIsFileSizeExceeded}
+                removeVariant={removeVariant}
+                appendVariant={appendVariant}
+                variantFieldsLength={variantFields.length}
+              />
             ))}
           </div>
         </section>

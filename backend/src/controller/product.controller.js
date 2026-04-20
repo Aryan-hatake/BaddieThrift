@@ -102,18 +102,8 @@ async function createProducts(req, res) {
     }),
   );
 
-  const modifiedVariants = variants.map((e, i) => {
-    const key = `variants[${i}]`;
-    return {
-      type: e.type,
-      options: e.options || [],
-      images: variantImgs[key] || null,
-    };
-  });
 
-  console.log("TYPE:", typeof modifiedVariants);
-  console.log("IS ARRAY:", Array.isArray(modifiedVariants));
-  console.log("FIRST ITEM TYPE:", typeof modifiedVariants[0]);
+
 
 
   const product = await productModel.create({
@@ -128,13 +118,47 @@ async function createProducts(req, res) {
       amount: price_Amount,
       currency: price_Currency,
     },
-    variants: modifiedVariants,
+    variants: variants.map((e, i) => {
+      const key = `variants[${i}]`;
+      return {
+        attribute:JSON.parse(JSON.stringify(e.attribute)),
+        stock: e.stock || 0,
+        price: e.price || {
+          amount: product.price.amount,
+          currency: product.price.currency,
+        },
+        images: variantImgs[key] || [],
+      };
+    }),
   });
 
   console.log(product);
-  //   res.status(200).json({
-  //     message: "test 123",
-  //   });
+    res.status(200).json({
+      message: "test 123",
+    });
 }
 
-export default { getAllSellerProducts, getAllProducts, createProducts };
+async function productDetails(req,res) {
+
+  const {productId} = req.params
+  if(!productId) return res.status(404).json({
+    success:false,
+    message:"product does not exist"
+  })
+
+  const product = await productModel.findById(productId)
+
+    if(!product) return res.status(404).json({
+    success:false,
+    message:"product does not exist"
+  })
+  console.log(product)
+  res.status(200).json({
+    success:true,
+    message:"product details fetched successfully",
+    product
+  })
+
+
+}
+export default { getAllSellerProducts, getAllProducts, createProducts , productDetails };

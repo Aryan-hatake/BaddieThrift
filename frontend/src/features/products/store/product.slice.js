@@ -6,6 +6,7 @@ const productSlice = createSlice({
         loading:false,
         sellerProducts:[],
         catalogProducts:[],
+        selectedProduct: null,
         catalogTotal:0,
         catalogPage:1,
         catalogTotalPages:1,
@@ -26,10 +27,13 @@ const productSlice = createSlice({
             state.catalogTotal = action.payload.total
             state.catalogPage = action.payload.page
             state.catalogTotalPages = action.payload.totalPages
+        },
+        setSelectedProduct:(state,action)=>{
+           state.selectedProduct = action.payload
         }
     }
 })
 
-export const {setError , setLoading , setProducts, setCatalogProducts } = productSlice.actions
+export const {setError , setLoading , setProducts, setCatalogProducts , setSelectedProduct } = productSlice.actions
 
 export default productSlice.reducer
