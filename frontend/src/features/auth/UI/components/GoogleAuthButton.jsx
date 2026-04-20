@@ -55,7 +55,7 @@ const GoogleAuthButton = () => {
 
   const handleClick = () => {
     // Point this to your backend's Google OAuth initiation route
-    console.log("clicked");
+
     window.location.href = "http://localhost:5173/api/auth/google";
   };
 

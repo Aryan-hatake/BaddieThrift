@@ -39,7 +39,15 @@ const productSchema = new mongoose.Schema({
         enum:["active","low_stock","draft"],
         default:"draft"
     },
-    images:[String]
+    images:[String],
+    variants:[
+        {
+            type:String,
+            options:Array,
+            images:Array
+        },
+    
+    ]
 },{timestamps:true})
 
 const productModel = mongoose.model("products",productSchema)

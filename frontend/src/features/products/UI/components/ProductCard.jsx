@@ -39,7 +39,7 @@ const ProductCard = ({ product, onAction }) => {
   const cfg = STATUS[status] ?? STATUS.active;
   const isLowStock = status === "low_stock";
   const thumb = images?.[0];
-  console.log(amount,currency);
+  
   const displayPrice = amount != null
     ? `${currency ?? "$"} ${Number(amount).toFixed(2)}`
     : "—";

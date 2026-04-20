@@ -30,6 +30,9 @@ passport.use(new GoogleStrategy({
     return done(null, profile);
 }));
 
+app.get("/health",(req,res)=>{
+    res.send("good health")
+})
 app.use("/api/auth",authRouter)
 app.use("/api/product",productRouter)
 

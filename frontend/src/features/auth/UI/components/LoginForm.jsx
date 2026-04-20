@@ -22,11 +22,11 @@ const LoginForm = () => {
     navigate("/")
   };
 
+ useEffect(() => {
   if (user) {
-    navigate("/")
-
+    navigate("/");
   }
-
+}, [user, navigate]);
 
   useEffect(() => {
     console.log(user)

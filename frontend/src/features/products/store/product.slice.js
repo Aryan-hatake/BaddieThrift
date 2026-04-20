@@ -5,6 +5,10 @@ const productSlice = createSlice({
     initialState:{
         loading:false,
         sellerProducts:[],
+        catalogProducts:[],
+        catalogTotal:0,
+        catalogPage:1,
+        catalogTotalPages:1,
         error:null
     },
     reducers:{
@@ -16,10 +20,16 @@ const productSlice = createSlice({
         },
         setProducts:(state,action)=>{
             state.sellerProducts = action.payload
+        },
+        setCatalogProducts:(state,action)=>{
+            state.catalogProducts = action.payload.products
+            state.catalogTotal = action.payload.total
+            state.catalogPage = action.payload.page
+            state.catalogTotalPages = action.payload.totalPages
         }
     }
 })
 
-export const {setError , setLoading , setProducts } = productSlice.actions
+export const {setError , setLoading , setProducts, setCatalogProducts } = productSlice.actions
 
 export default productSlice.reducer

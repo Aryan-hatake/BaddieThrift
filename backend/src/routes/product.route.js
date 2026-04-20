@@ -10,16 +10,15 @@ const upload = multer({
 
 const productRouter = Router();
 
-productRouter.post(
-  "/createProduct",
-  authUser,
-  upload.array("images[]", 7),
-  productController.createProduct,
-);
+
 productRouter.get(
   "/getSellerProducts",
   authUser,
+ 
   productController.getAllSellerProducts,
 );
+
+productRouter.post("/createProduct",authUser,upload.any(),productController.createProducts)
+productRouter.get("/getAllProducts", productController.getAllProducts);
 
 export default productRouter;

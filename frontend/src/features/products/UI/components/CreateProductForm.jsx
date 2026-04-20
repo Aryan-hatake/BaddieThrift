@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 /* ─────────────────────────────────────────
 Utility: brutalist input classes
 ───────────────────────────────────────── */
@@ -186,7 +186,7 @@ const ImageSlot = ({ image, isPrimary, onUpload, onRemove, slotIndex, setIsFileS
     if (!file) return;
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       setIsFileSizeExceeded(true);
-      console.log("file size exceeded")
+   
       return;
     }
     const url = URL.createObjectURL(file);
@@ -254,6 +254,230 @@ const ImageSlot = ({ image, isPrimary, onUpload, onRemove, slotIndex, setIsFileS
   );
 };
 /* ─────────────────────────────────────────
+   Variant Image Slot (single file)
+───────────────────────────────────────── */
+const MAX_VARIANT_IMAGES = 4;
+
+const VariantImageSlot = ({ image, slotIndex, onUpload, onRemove, setIsFileSizeExceeded, isDragging }) => {
+  const fileRef = useRef(null);
+
+  const handleFile = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setIsFileSizeExceeded(true);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    onUpload(slotIndex, { file, url });
+  };
+
+  const handleInputChange = (e) => {
+    handleFile(e.target.files?.[0]);
+    e.target.value = "";
+  };
+
+  if (image) {
+    return (
+      <div className="aspect-square bg-white border-2 border-black flex items-center justify-center relative overflow-hidden group">
+        <img
+          src={image.url}
+          alt={`Variant image ${slotIndex + 1}`}
+          className="w-full h-full object-cover"
+        />
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => onRemove(slotIndex)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#ba1a1a] text-white p-1.5 hover:scale-110 transform transition-transform"
+            aria-label="Remove variant image"
+          >
+            <span className="material-symbols-outlined text-sm block leading-none">close</span>
+          </button>
+        </div>
+        {/* Slot badge */}
+        <span
+          className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[7px] font-black px-1 py-0.5 uppercase tracking-wider"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          IMG_{String(slotIndex + 1).padStart(2, "0")}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => fileRef.current?.click()}
+      className={`aspect-square border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group ${
+        isDragging
+          ? "border-[#ccff00] bg-[#ccff00]/10 scale-[0.98]"
+          : "border-black/25 bg-[#f3f3f3] hover:border-[#506600] hover:bg-[#f0f5e8]"
+      }`}
+      aria-label={`Upload variant image ${slotIndex + 1}`}
+    >
+      <span
+        className={`material-symbols-outlined text-2xl mb-1 transition-colors ${
+          isDragging ? "text-[#506600]" : "text-[#5e5e5e] group-hover:text-[#506600]"
+        }`}
+      >
+        {isDragging ? "file_download" : "add_photo_alternate"}
+      </span>
+      <span
+        className="text-[8px] font-black uppercase tracking-[0.15em] text-[#5e5e5e] group-hover:text-[#506600] transition-colors"
+        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+      >
+        {isDragging ? "DROP" : "ADD"}
+      </span>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleInputChange}
+      />
+    </button>
+  );
+};
+
+/* ─────────────────────────────────────────
+   Variant Image Grid (drag-and-drop aware)
+───────────────────────────────────────── */
+const VariantImageGrid = ({ variantIndex, images, onUpdate, setIsFileSizeExceeded }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
+
+  const handleUpload = useCallback((slotIndex, imageData) => {
+    onUpdate((prev) => {
+      const next = { ...prev };
+      const slots = [...(next[variantIndex] ?? Array(MAX_VARIANT_IMAGES).fill(null))];
+      slots[slotIndex] = imageData;
+      next[variantIndex] = slots;
+      return next;
+    });
+  }, [variantIndex, onUpdate]);
+
+  const handleRemove = useCallback((slotIndex) => {
+    onUpdate((prev) => {
+      const next = { ...prev };
+      const slots = [...(next[variantIndex] ?? Array(MAX_VARIANT_IMAGES).fill(null))];
+      if (slots[slotIndex]?.url) URL.revokeObjectURL(slots[slotIndex].url);
+      slots[slotIndex] = null;
+      next[variantIndex] = slots;
+      return next;
+    });
+  }, [variantIndex, onUpdate]);
+
+  // Drag events on the whole grid
+  const onDragEnter = (e) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    setIsDragging(true);
+  };
+  const onDragLeave = (e) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setIsDragging(false);
+  };
+  const onDragOver = (e) => e.preventDefault();
+  const onDrop = (e) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    const slots = images ?? Array(MAX_VARIANT_IMAGES).fill(null);
+    // Fill first empty slots
+    let fileIdx = 0;
+    for (let i = 0; i < MAX_VARIANT_IMAGES && fileIdx < files.length; i++) {
+      if (!slots[i]) {
+        const file = files[fileIdx++];
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+          setIsFileSizeExceeded(true);
+          continue;
+        }
+        const url = URL.createObjectURL(file);
+        handleUpload(i, { file, url });
+      }
+    }
+  };
+
+  const slots = images ?? Array(MAX_VARIANT_IMAGES).fill(null);
+  const filled = slots.filter(Boolean).length;
+
+  return (
+    <div
+      className={`mt-3 p-3 border-2 transition-all duration-200 ${
+        isDragging
+          ? "border-[#ccff00] bg-[#ccff00]/5 shadow-[0_0_0_3px_#ccff0033]"
+          : "border-dashed border-black/20 bg-transparent"
+      }`}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span
+            className="material-symbols-outlined text-[14px] text-[#5e5e5e]"
+            style={{ fontSize: "14px" }}
+          >
+            photo_library
+          </span>
+          <span
+            className="text-[10px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            VARIANT IMAGES
+          </span>
+          <span
+            className="bg-black text-[#ccff00] text-[7px] font-black px-1.5 py-0.5 uppercase tracking-wider"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            {filled}/{MAX_VARIANT_IMAGES}
+          </span>
+        </div>
+        {isDragging && (
+          <span
+            className="text-[9px] font-black uppercase tracking-[0.2em] text-[#506600] animate-pulse"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            ⬇ DROP TO ADD
+          </span>
+        )}
+      </div>
+
+      {/* 4-slot grid */}
+      <div className="grid grid-cols-4 gap-2">
+        {slots.map((img, i) => (
+          <VariantImageSlot
+            key={i}
+            slotIndex={i}
+            image={img}
+            onUpload={handleUpload}
+            onRemove={handleRemove}
+            setIsFileSizeExceeded={setIsFileSizeExceeded}
+            isDragging={isDragging && !img}
+          />
+        ))}
+      </div>
+
+      {/* Hint */}
+      <p
+        className="mt-2 text-[8px] font-bold tracking-widest text-[#5e5e5e]/50 uppercase flex items-center gap-1"
+        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: "10px" }}>info</span>
+        Click slots or drag &amp; drop · Max {MAX_FILE_SIZE_MB} MB each · JPG PNG WEBP
+      </p>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────
    Keyframe styles injected once
 ───────────────────────────────────────── */
 const StyleInjector = () => (
@@ -291,14 +515,25 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
     reset,
     formState: { errors },
     setValue,
+    control,
   } = useForm({
     defaultValues: {
       images: [],
+      variants: [{ type: "", options: "", images: [] }],
     },
   });
 
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({ control, name: "variants" });
+
 
   const [images, setImages] = useState(Array(4).fill(null)); // show 4 slots (grows up to MAX_IMAGES)
+
+  // variantImages: { [variantIndex]: [null | { file, url }, ...4 slots] }
+  const [variantImages, setVariantImages] = useState({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -339,11 +574,27 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const preparedData = {
+        ...data,
+        variants: (data.variants ?? []).map(({ type, options }, idx) => ({
+          type,
+          options: String(options || "")
+            .split(/[\r\n,]+/)
+            .map((v) => v.trim())
+            .filter(Boolean),
+          // Attach variant image File objects (caller uploads to CDN / appends to FormData)
+          images: (variantImages[idx] ?? []).filter(Boolean).map((img) => img.file),
+        })),
+      };
 
-
-      onSubmit(data);
+      onSubmit(preparedData);
+      // Clean up object URLs
+      Object.values(variantImages).flat().forEach((img) => {
+        if (img?.url) URL.revokeObjectURL(img.url);
+      });
       setImages(Array(4).fill(null));
-      reset();
+      setVariantImages({});
+      // reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -755,6 +1006,137 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
               </div>
               <FieldError message={errors.price?.price_Currency?.message} />
             </div>
+          </div>
+        </section>
+
+        {/* ── 04 / Variant Config ── */}
+        <section className="space-y-6">
+          <SectionHeader
+            num="04"
+            title="Variant Config"
+            subtitle="[ ADD TYPE + VALUES + IMAGE URLS ]"
+          />
+          <div className="space-y-4">
+            {variantFields.map((field, index) => (
+              <div
+                key={field.id}
+                className="p-4 border-2 border-black/10 bg-[#f8f8f8] relative"
+              >
+                {/* Row badge */}
+                <span
+                  className="absolute top-3 right-3 bg-black text-white text-[8px] font-black px-1.5 py-0.5 uppercase tracking-[0.2em]"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  VAR_{String(index + 1).padStart(2, "0")}
+                </span>
+
+                <div className="grid gap-4 md:grid-cols-[1.3fr_1.7fr] mt-1">
+                  {/* Variant Type */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <label
+                        htmlFor={`variant-type-${field.id}`}
+                        className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      >
+                        Variant Type
+                      </label>
+                      {errors.variants?.[index]?.type && (
+                        <span
+                          className="text-[8px] font-black tracking-[0.15em] uppercase bg-[#ba1a1a] text-white px-1.5 py-0.5"
+                          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                        >
+                          REQUIRED
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      id={`variant-type-${field.id}`}
+                      type="text"
+                      {...register(`variants.${index}.type`, {
+                        required: { value: true, message: "variant type is required" },
+                      })}
+                      placeholder="e.g. Color / Size / Material"
+                      className={errors.variants?.[index]?.type ? inputError : inputBase}
+                      aria-invalid={!!errors.variants?.[index]?.type}
+                    />
+                    <FieldError message={errors.variants?.[index]?.type?.message} />
+                  </div>
+
+                  {/* Variant Options */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <label
+                        htmlFor={`variant-options-${field.id}`}
+                        className="text-[11px] font-black tracking-[0.2em] uppercase text-[#5e5e5e]"
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      >
+                        Values 
+                      </label>
+                      {errors.variants?.[index]?.options && (
+                        <span
+                          className="text-[8px] font-black tracking-[0.15em] uppercase bg-[#ba1a1a] text-white px-1.5 py-0.5"
+                          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                        >
+                          REQUIRED
+                        </span>
+                      )}
+                    </div>
+                    <textarea
+                      id={`variant-options-${field.id}`}
+                      rows={4}
+                      {...register(`variants.${index}.options`)}
+                      placeholder={`One value per line or comma-separated\nXS\nS\nhttps://cdn.example.com/red.jpg`}
+                      className={`${
+                        errors.variants?.[index]?.options ? inputError : inputBase
+                      } resize-none`}
+                      aria-invalid={!!errors.variants?.[index]?.options}
+                    />
+                    <FieldError message={errors.variants?.[index]?.options?.message} />
+                    <p
+                      className="text-[9px] font-bold tracking-widest text-[#5e5e5e]/60 uppercase flex items-center gap-1 mt-0.5"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      <span className="material-symbols-outlined text-[12px]">info</span>
+                      Separate entries with commas or new lines
+                    </p>
+                  </div>
+                  {/* Variant Images — drag-and-drop uploader */}
+                </div>
+
+                {/* Variant image grid — spans full width below the two columns */}
+                <VariantImageGrid
+                  variantIndex={index}
+                  images={variantImages[index]}
+                  onUpdate={setVariantImages}
+                  setIsFileSizeExceeded={setIsFileSizeExceeded}
+                />
+
+                {/* Row Actions */}
+                <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-black/10">
+                  {variantFields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeVariant(index)}
+                      className="flex items-center gap-1 border-2 border-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#ba1a1a] hover:border-[#ba1a1a] hover:text-white transition-colors"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      <span className="material-symbols-outlined text-sm leading-none">delete</span>
+                      Remove
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => appendVariant({ type: "", options: "" })}
+                    className="flex items-center gap-1 bg-[#ccff00] text-black font-black text-[10px] uppercase tracking-[0.2em] px-3 py-2 hover:bg-[#506600] hover:text-white transition-colors"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    <span className="material-symbols-outlined text-sm leading-none">add</span>
+                    Add Variant
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

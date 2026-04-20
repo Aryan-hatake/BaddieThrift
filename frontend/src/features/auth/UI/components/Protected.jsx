@@ -2,23 +2,28 @@ import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
+
 const Protected = ({ children }) => {
   const { user, loading } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  
+ 
 
   useEffect(() => {
-    if (!user && !loading) {
+    if (loading) return;
+
+    if (!user) {
       navigate("/login");
+      return
     }
 
-    if (loading) return <h1>Loading...</h1>;
+    if (user) {
 
-    if (!loading && user) {
       if (user.role !== "seller") navigate("/");
     }
-  }, []);
+  }, [user, loading, navigate]);
 
-  
+    if (!user || user.role !== "seller") return null;
 
   return children;
 };

@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
-import { setError, setLoading , setProducts } from '../store/product.slice';
-import { createProduct , getSellerProducts} from '../services/product.api';
+import { setError, setLoading, setProducts, setCatalogProducts } from '../store/product.slice';
+import { createProduct, getSellerProducts, getAllProducts } from '../services/product.api';
 
 export function useProduct() {
 
@@ -9,36 +9,30 @@ export function useProduct() {
    async function handleCreateProduct(data) {
       dispatch(setLoading(true))
       try {
-
          const newImageArr = data.images.map((image) => {
             return image ? image?.file : null
          })
          data.images = newImageArr
-
          const response = await createProduct(data)
-         console.log(response)
          return response?.product
-
       }
       catch (err) {
-         console.log(err)
          dispatch(setError(err.message))
       }
       finally {
          dispatch(setLoading(false))
       }
    }
-   
+
    async function handleSellerProducts() {
       dispatch(setLoading(true))
       try {
          const response = await getSellerProducts()
-         console.log(response)
-          dispatch(setProducts(response?.allProducts))
+         dispatch(setProducts(response?.allProducts))
          return response?.allProducts
       }
       catch (err) {
-         console.log(err)
+
          dispatch(setError(err.message))
       }
       finally {
@@ -46,5 +40,25 @@ export function useProduct() {
       }
    }
 
-   return { handleCreateProduct , handleSellerProducts }
+   async function handleGetAllProducts(params = {}) {
+      dispatch(setLoading(true))
+      try {
+         const response = await getAllProducts(params)
+         dispatch(setCatalogProducts({
+            products: response?.products ?? [],
+            total: response?.total ?? 0,
+            page: response?.page ?? 1,
+            totalPages: response?.totalPages ?? 1,
+         }))
+         return response
+      }
+      catch (err) {
+         dispatch(setError(err.message))
+      }
+      finally {
+         dispatch(setLoading(false))
+      }
+   }
+
+   return { handleCreateProduct, handleSellerProducts, handleGetAllProducts }
 }

@@ -3,6 +3,7 @@ import { router } from "./app.routes";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
+
 function App() {
   const { handleGetMe } = useAuth();
 
@@ -11,12 +12,14 @@ function App() {
       await handleGetMe();
     })();
   }, []);
+  
+  const user = useSelector((state) => state.auth.user);
+  const errAuth = useSelector((state) => state.auth.error);
+  const errProduct = useSelector((state) => state.product.error);
 
-  const errAuth = useSelector((state)=>state.auth.error)
-  const errProduct = useSelector((state)=>state.product.error)
-
-  console.log("ERR AUTH: ", errAuth)
-  console.log("ERR PRODUCT",  errProduct)
+  console.log(user)
+  console.log("ERR AUTH: ", errAuth);
+  console.log("ERR PRODUCT", errProduct);
 
   return (
     <>

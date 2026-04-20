@@ -3,12 +3,17 @@ import Register from "../features/auth/UI/Register";
 import Login from "../features/auth/UI/Login";
 import CreateProduct from "../features/products/UI/pages/CreateProduct";
 import SellerInventory from "../features/products/UI/pages/SellerInventory";
+import ProductCatalog from "../features/products/UI/pages/ProductCatalog";
 import Protected from "../features/auth/UI/components/Protected";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <h1>Helloo</h1>,
+    element: <ProductCatalog />,
+  },
+  {
+    path: "/catalog",
+    element: <ProductCatalog />,
   },
   {
     path: "/register",
@@ -40,3 +45,4 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
