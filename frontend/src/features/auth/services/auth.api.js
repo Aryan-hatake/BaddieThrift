@@ -17,6 +17,12 @@ export const login = async(email,contactNo, password)=>{
 }
 
 export async function getMe() {
-    const res = await api.get("/getMe");
-    return res.data
+    try{
+
+        const res = await api.get("/getMe");
+        return res.data
+    }
+    catch(err){
+        console.log("recieved err in response")
+    }
 }

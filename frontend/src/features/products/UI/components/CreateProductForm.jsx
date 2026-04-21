@@ -904,7 +904,7 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
       });
       setImages(Array(4).fill(null));
       setVariantImages({});
-      // reset();
+      reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -1018,10 +1018,7 @@ const CreateProductForm = ({ onSubmit, onDiscard }) => {
                     value: true,
                     message: "title of product is required",
                   },
-                  pattern: {
-                    value: /^[a-zA-Z0-9]*$/,
-                    message: "Only alphanumeric characters are allowed",
-                  },
+               
                 })}
                 placeholder="Enter product name"
                 className={errors.title ? inputError : inputBase}

@@ -38,10 +38,10 @@ export const useAuth = () => {
     try{
       dispatch(setLoading(true))
       const data = await getMe();
-      dispatch(setUser(data.user))
+      dispatch(setUser(data?.user))
     }
     catch(err){
-      dispatch(setError(err))
+      dispatch(setError(err.message))
     }
     finally{
       dispatch(setLoading(false))

@@ -6,6 +6,7 @@ import SellerInventory from "../features/products/UI/pages/SellerInventory";
 import ProductCatalog from "../features/products/UI/pages/ProductCatalog";
 import ProductDetails from "../features/products/UI/pages/ProductDetails";
 import Protected from "../features/auth/UI/components/Protected";
+import Cart from "../features/cart/UI/pages/Cart";
 
 export const router = createBrowserRouter([
   {
@@ -17,7 +18,7 @@ export const router = createBrowserRouter([
     element: <ProductCatalog />,
   },
   {
-    path: "/product/:id",
+    path: "/product/:id/:variantId?",
     element: <ProductDetails />,
   },
   {
@@ -49,5 +50,9 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path:"cart/:user",
+    element:<Cart/>
+  }
 ]);
 

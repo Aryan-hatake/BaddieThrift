@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useProduct } from "../../hooks/useProduct";
+import { useCart } from "../../../cart/hooks/useCart";
 import CatalogNavbar from "../components/CatalogNavbar";
 import CatalogBottomNav from "../components/CatalogBottomNav";
 
@@ -114,11 +115,10 @@ const ImageGallery = ({ images = [], title }) => {
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`aspect-square overflow-hidden border-2 transition-all ${
-                i === active
+              className={`aspect-square overflow-hidden border-2 transition-all ${i === active
                   ? "border-black shadow-[3px_3px_0px_#ccff00]"
                   : "border-black/20 hover:border-black/60"
-              }`}
+                }`}
               aria-label={`View image ${i + 1}`}
             >
               <img
@@ -156,22 +156,32 @@ const Skeleton = () => (
    Main Page Component
 ───────────────────────────────────────── */
 const ProductDetails = () => {
-  const { id } = useParams();
+  const { id, variantId } = useParams();
   const navigate = useNavigate();
   const { handleProductDetails } = useProduct();
+  const { handleAddToCart } = useCart();
 
   const { selectedProduct: product, loading } = useSelector((s) => s.product);
-
+  const { user } = useSelector((state) => state.auth)
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(null);
 
   useEffect(() => {
     if (id) handleProductDetails(id);
   }, [id]);
 
-  /* Reset variant selection when product changes */
+  /* Sync selected variant from URL when product loads */
   useEffect(() => {
-    setSelectedVariantIdx(null);
-  }, [product?._id]);
+    if (!product?.variants?.length) {
+      setSelectedVariantIdx(null);
+      return;
+    }
+    if (variantId) {
+      const idx = product.variants.findIndex((v) => v._id === variantId);
+      setSelectedVariantIdx(idx !== -1 ? idx : null);
+    } else {
+      setSelectedVariantIdx(null);
+    }
+  }, [product?._id, variantId]);
 
   if (loading) {
     return (
@@ -208,7 +218,7 @@ const ProductDetails = () => {
     );
   }
 
-  /* Derived values */
+  /* ── Base product fields ── */
   const {
     title,
     description,
@@ -223,11 +233,24 @@ const ProductDetails = () => {
 
   const selectedVariant = selectedVariantIdx !== null ? variants[selectedVariantIdx] : null;
 
-  /* Active price (base or selected variant) */
+  /* ── Variant-override logic ──────────────────────────────────────────────
+     Fields that a variant CAN override (if the variant has them):
+       • price.priceAmount  → activeAmount
+       • price.priceCurrency → activeCurrency
+       • stock              → activeStock
+       • images             → activeImages (variant images replace, not append)
+     Fields that ALWAYS stay from the product (variants have no such field):
+       • title, description, sku, status, createdAt
+  ──────────────────────────────────────────────────────────────────────── */
   const activeAmount = selectedVariant?.price?.priceAmount ?? amount ?? 0;
   const activeCurrency = selectedVariant?.price?.priceCurrency ?? currency ?? "USD";
   const activeStock = selectedVariant?.stock ?? stock ?? 0;
   const symbol = currencySymbol(activeCurrency);
+
+  /* Images: if the selected variant has its own images use those exclusively,
+     otherwise fall back to the product's images */
+  const variantImages = selectedVariant?.images?.filter(Boolean) ?? [];
+  const activeImages = variantImages.length > 0 ? variantImages : images.filter(Boolean);
 
   const isSoldOut = status !== "active" || activeStock === 0;
 
@@ -235,11 +258,6 @@ const ProductDetails = () => {
     const diff = (Date.now() - new Date(createdAt)) / (1000 * 60 * 60 * 24);
     return diff < 14;
   })();
-
-  /* Collect all images: product images + selected variant images */
-  const variantImages =
-    selectedVariant?.images?.filter(Boolean) ?? [];
-  const allImages = [...images, ...variantImages];
 
   return (
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
@@ -262,7 +280,7 @@ const ProductDetails = () => {
 
           {/* ── Left: Image Gallery ── */}
           <section className="w-full lg:w-[60%] bg-[#f3f3f3] p-4 md:p-8 lg:p-12 border-r-2 border-black">
-            <ImageGallery images={allImages} title={title} />
+            <ImageGallery images={activeImages} title={title} />
           </section>
 
           {/* ── Right: Product Info ── */}
@@ -343,7 +361,7 @@ const ProductDetails = () => {
                   </span>
                   {selectedVariant && (
                     <button
-                      onClick={() => setSelectedVariantIdx(null)}
+                      onClick={() => navigate(`/product/${id}`, { replace: true })}
                       className="text-[9px] font-black uppercase tracking-widest text-[#ba1a1a] hover:underline"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
@@ -362,26 +380,28 @@ const ProductDetails = () => {
                       <button
                         key={v._id ?? i}
                         id={`variant-btn-${i}`}
-                        onClick={() =>
-                          setSelectedVariantIdx(isSelected ? null : i)
-                        }
+                        onClick={() => {
+                          if (isSelected) {
+                            navigate(`/product/${id}`, { replace: true });
+                          } else {
+                            navigate(`/product/${id}/${v._id}`, { replace: true });
+                          }
+                        }}
                         disabled={isOutOfStock}
-                        className={`w-full flex items-center justify-between px-4 py-3 border-2 transition-all text-left ${
-                          isSelected
+                        className={`w-full flex items-center justify-between px-4 py-3 border-2 transition-all text-left ${isSelected
                             ? "border-black bg-black text-white shadow-[4px_4px_0px_#ccff00]"
                             : isOutOfStock
-                            ? "border-black/20 bg-[#f3f3f3] opacity-40 cursor-not-allowed"
-                            : "border-black/30 bg-white hover:border-black hover:shadow-[3px_3px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
-                        }`}
+                              ? "border-black/20 bg-[#f3f3f3] opacity-40 cursor-not-allowed"
+                              : "border-black/30 bg-white hover:border-black hover:shadow-[3px_3px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                          }`}
                       >
                         {/* Attributes */}
                         <div className="flex flex-wrap gap-1.5">
                           {Object.entries(v.attribute ?? {}).map(([k, val]) => (
                             <span
                               key={k}
-                              className={`text-[10px] font-black uppercase tracking-wide ${
-                                isSelected ? "text-[#ccff00]" : "text-[#1b1b1b]"
-                              }`}
+                              className={`text-[10px] font-black uppercase tracking-wide ${isSelected ? "text-[#ccff00]" : "text-[#1b1b1b]"
+                                }`}
                               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                             >
                               {k}: <span className={isSelected ? "text-white" : "text-[#506600]"}>{val}</span>
@@ -392,17 +412,15 @@ const ProductDetails = () => {
                         {/* Price + stock */}
                         <div className="flex flex-col items-end shrink-0 ml-4">
                           <span
-                            className={`text-sm font-black ${
-                              isSelected ? "text-[#ccff00]" : "text-[#506600]"
-                            }`}
+                            className={`text-sm font-black ${isSelected ? "text-[#ccff00]" : "text-[#506600]"
+                              }`}
                             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                           >
                             {vSymbol}{Number(v.price?.priceAmount ?? 0).toFixed(2)}
                           </span>
                           <span
-                            className={`text-[8px] font-bold uppercase tracking-widest ${
-                              isSelected ? "text-white/60" : "text-[#5e5e5e]"
-                            }`}
+                            className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? "text-white/60" : "text-[#5e5e5e]"
+                              }`}
                             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                           >
                             {isOutOfStock ? "OUT OF STOCK" : `QTY: ${v.stock}`}
@@ -418,9 +436,8 @@ const ProductDetails = () => {
             {/* Stock indicator */}
             <div className="flex items-center gap-2 mb-6">
               <span
-                className={`w-2 h-2 rounded-full ${
-                  isSoldOut ? "bg-[#ba1a1a]" : activeStock <= 3 ? "bg-[#f0a500]" : "bg-[#506600]"
-                }`}
+                className={`w-2 h-2 rounded-full ${isSoldOut ? "bg-[#ba1a1a]" : activeStock <= 3 ? "bg-[#f0a500]" : "bg-[#506600]"
+                  }`}
               />
               <span
                 className="text-[10px] font-black uppercase tracking-widest text-[#5e5e5e]"
@@ -429,8 +446,8 @@ const ProductDetails = () => {
                 {isSoldOut
                   ? "OUT OF STOCK"
                   : activeStock <= 3
-                  ? `ONLY ${activeStock} LEFT`
-                  : `IN STOCK — ${activeStock} UNITS`}
+                    ? `ONLY ${activeStock} LEFT`
+                    : `IN STOCK — ${activeStock} UNITS`}
               </span>
             </div>
 
@@ -439,6 +456,14 @@ const ProductDetails = () => {
               <button
                 id="add-to-bag-btn"
                 disabled={isSoldOut}
+                onClick={() => {
+                  if (user?._id) {
+                    handleAddToCart(id, variantId, 1);
+                    navigate(`/cart/${user._id}`);
+                  } else {
+                    navigate("/login");
+                  }
+                }}
                 className="w-full bg-[#ccff00] text-black py-5 font-black text-lg tracking-tighter uppercase border-2 border-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >

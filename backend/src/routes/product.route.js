@@ -20,6 +20,6 @@ productRouter.get(
 
 productRouter.post("/createProduct",authUser,upload.any(),productController.createProducts)
 productRouter.get("/getAllProducts", productController.getAllProducts);
-productRouter.get("/details/:productId",authUser,productController.productDetails)
+productRouter.get("/details/:productId",productController.productDetails)
 
 export default productRouter;

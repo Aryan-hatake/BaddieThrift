@@ -31,9 +31,7 @@ const RegistrationForm = () => {
 
   }
 
-  useEffect(() => {
-    console.log(user)
-  }, [user])
+
 
   /* ── Framer Motion variants ── */
   const bgSwipe = {

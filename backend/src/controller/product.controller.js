@@ -18,7 +18,7 @@ async function getAllSellerProducts(req, res) {
 }
 
 async function getAllProducts(req, res) {
-  const filter = req.body;
+  const filter = req.query;
 
   const query = { status: "active" };
 
@@ -28,6 +28,7 @@ async function getAllProducts(req, res) {
       { description: { $regex: filter?.search, $options: "i" } },
     ];
   }
+
 
   if (filter?.category && filter?.category !== "all") {
     query.category = filter?.category;
@@ -132,7 +133,6 @@ async function createProducts(req, res) {
     }),
   });
 
-  console.log(product);
     res.status(200).json({
       message: "test 123",
     });
@@ -152,7 +152,7 @@ async function productDetails(req,res) {
     success:false,
     message:"product does not exist"
   })
-  console.log(product)
+
   res.status(200).json({
     success:true,
     message:"product details fetched successfully",

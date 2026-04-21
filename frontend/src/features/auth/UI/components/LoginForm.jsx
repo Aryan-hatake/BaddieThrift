@@ -28,10 +28,6 @@ const LoginForm = () => {
   }
 }, [user, navigate]);
 
-  useEffect(() => {
-    console.log(user)
-  }, [user])
-
   /* ── Framer Motion variants ── */
   const bgSwipe = {
     rest: { y: "100%" },

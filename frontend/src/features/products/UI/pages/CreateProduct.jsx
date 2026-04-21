@@ -12,7 +12,7 @@ const CreateProduct = () => {
   const { handleCreateProduct } = useProduct();
   /* ── Submit handler: wire up to your API later ── */
   const handleSubmit = async (data) => {
-    console.log(data)
+
     handleCreateProduct(data);
     // navigate("/seller/inventory");
   };

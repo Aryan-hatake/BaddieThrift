@@ -25,12 +25,11 @@ async function getCart(req, res) {
 
 async function addToCart(req, res) {
   try {
-    const { productId, variantId, quantity=1 } = req.body;
+    const { productId, variantId, quantity = 1 } = req.body;
 
-    const productExist = await productModel.findOne({
-      _id: productId,
-      "variants._id": variantId,
-    });
+    const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
+
+    const productExist = await productModel.findOne(query);
 
     if (!productExist) {
       return res.status(404).json({
@@ -41,34 +40,44 @@ async function addToCart(req, res) {
 
     const cart = await userCart(req.userId);
 
+
+
     const itemAlreadyExist = cart.items.some((e, i) => {
-      return (
-        productId === e.product._id.toString() &&
-        variantId === e.variant._id.toString()
-      );
+      if (variantId) {
+        return (
+          productId === e.product._id.toString() &&
+          variantId === e.variant._id.toString()
+        );
+      } else {
+        return (
+          productId === e.product._id.toString()
+        )
+      }
     });
 
-    let newCart;
-    console.log(productExist.stock);
+    let newCart = [];
+ 
 
     if (itemAlreadyExist) {
       newCart = cart.items.map((e, i) => {
         let newQty = e.quantity;
-       
+
         if (
-          productId === e.product._id.toString() &&
-          variantId === e.variant.toString()
+          variantId ?
+            productId === e.product._id.toString() &&
+            variantId === e.variant._id.toString() : productId === e.product._id.toString()
         ) {
-          console.log( e.quantity , quantity , productExist.stock)
+
           newQty =
             e.quantity + quantity < productExist.stock
               ? (e.quantity += quantity)
               : e.quantity;
         }
+        cart.items[i].quantity = newQty;
         return { ...e.toObject(), quantity: newQty };
       });
 
-      const temp = await cartModel.updateOne(
+      await cartModel.updateOne(
         { user: req.userId },
         {
           $set: {
@@ -77,7 +86,13 @@ async function addToCart(req, res) {
         },
       );
     } else {
-       await cartModel.updateOne(
+
+      newCart.push({
+        product: productId,
+        variant: variantId,
+        quantity: quantity,
+      })
+      await cartModel.updateOne(
         { user: req.userId },
         {
           $push: {
@@ -90,16 +105,149 @@ async function addToCart(req, res) {
         },
         { upsert: true },
       );
-    }
+    } 
+
 
     return res.status(200).json({
       success: true,
       message: "item added to cart successfully",
-      cart,
+      cart:newCart,
     });
   } catch (error) {
     console.log(error);
   }
 }
 
-export default { getCart, addToCart };
+async function removeFromCart(req,res) {
+  try {
+    const {productId,variantId} = req.body
+    const cart = await userCart(req.userId);
+    
+    const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
+
+    const productExist = await productModel.findOne(query);
+
+    if(!productExist) {
+      return res.status(404).json({
+        success:false,
+        message:"product does not exist"
+      })
+    }
+    const itemExist = cart.items.some((e, i) => {
+      if (variantId) {
+        return (
+          productId === e.product._id.toString() &&
+          variantId === e.variant._id.toString()
+        );
+      } else {
+        return (
+          productId === e.product._id.toString()
+        )
+      }
+    });
+
+    if(!itemExist) {
+      return res.status(404).json({
+        success:false,
+        message:"item does not exist in cart"
+      })
+    }
+
+    const newCart = cart.items.filter((e, i) => {
+      if (variantId) {
+  
+        return (
+          productId !== e.product._id.toString() &&
+          variantId !== e.variant._id.toString()
+        );
+      } else {
+        return (
+          productId !== e.product._id.toString()
+        )
+      }
+    });
+
+    await cartModel.updateOne(
+      { user: req.userId },
+      {
+        $set: {
+          items: newCart,
+        },
+      },
+    );
+    res.status(200).json({
+      success:true,
+      message:"item removed successfully",
+      cart:newCart,
+    })
+  } catch (error) {
+     console.log(error)
+  }
+}
+
+async function updateCartItem(req,res) {
+  try {
+    const {productId,variantId,quantity} = req.body
+    const cart = await userCart(req.userId);
+    
+    console.log(quantity)
+    const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
+
+    const itemExist = cart.items.some((e, i) => {
+      if (variantId) {
+        return (
+          productId === e.product._id.toString() &&
+          variantId === e.variant._id.toString()
+        );
+      } else {
+        return (
+          productId === e.product._id.toString()
+        )
+      }
+    });
+
+    if(!itemExist) {
+      return res.status(404).json({
+        success:false,
+        message:"item does not exist in cart"
+      })
+    }
+    
+    const productExist = await productModel.findOne(query);
+    const newCart = cart.items.map((e, i) => {
+      let newQty = e.quantity;
+
+      if (
+        variantId ?
+          productId === e.product._id.toString() &&
+          variantId === e.variant._id.toString() : productId === e.product._id.toString()
+      ) {
+
+        newQty =
+          e.quantity + quantity < productExist.stock
+            ? (e.quantity += quantity)
+            : e.quantity;
+      }
+      cart.items[i].quantity = newQty;
+      return { ...e.toObject(), quantity: newQty };
+    });
+
+    await cartModel.updateOne(
+      { user: req.userId },
+      {
+        $set: {
+          items: newCart,
+        },
+      },
+    );
+    
+    res.status(200).json({
+      success:true,
+      message:"item updated successfully",
+      cart:newCart,
+    })
+  } catch (error) {
+     console.log(error)
+  }
+}
+export default { getCart, addToCart , removeFromCart , updateCartItem };
