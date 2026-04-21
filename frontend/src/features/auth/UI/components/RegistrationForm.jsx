@@ -5,6 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import GoogleAuthButton from "./GoogleAuthButton";
+import { Link } from "react-router-dom";
 
 const RegistrationForm = () => {
   const [agreed, setAgreed] = useState(false);
@@ -13,7 +14,7 @@ const RegistrationForm = () => {
 
   const user = useSelector((state) => state.auth.user)
 
-  const { handleRegister } = useAuth();
+  const { handleRegister ,handleLoginForGoogle } = useAuth();
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -22,12 +23,12 @@ const RegistrationForm = () => {
     const { fullName, email, password, contactNo } = formRef.current;
 
     await handleRegister(fullName.value, email.value, password.value, contactNo.value);
-    navigate("/")
+    user.role === "seller" ? navigate("/seller") : navigate("/")
 
   };
 
   if (user) {
-    navigate("/")
+    user.role === "seller" ? navigate("/seller") : navigate("/")
 
   }
 
@@ -248,7 +249,7 @@ const RegistrationForm = () => {
         </div>
 
         {/* ── Google OAuth ── */}
-        <div className="mt-4">
+        <div onClick={handleLoginForGoogle} className="mt-4">
           <GoogleAuthButton label="CONTINUE VIA G_PROTOCOL" />
         </div>
 
@@ -264,13 +265,13 @@ const RegistrationForm = () => {
             </span>
             <div className="flex-grow h-px bg-[#1b1b1b]/10" />
           </div>
-          <a
-            href="/login"
+          <Link
+            to="/auth/login"
             className="text-center text-[10px] font-black uppercase tracking-[0.3em] hover:text-[#506600] transition-colors py-2 border border-transparent hover:border-[#ccff00]"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             ACCESS VAULT_V1.0
-          </a>
+          </Link>
         </div>
       </div>
 

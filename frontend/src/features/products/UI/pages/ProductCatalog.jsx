@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useProduct } from "../../hooks/useProduct";
-import CatalogNavbar from "../components/CatalogNavbar";
-import CatalogBottomNav from "../components/CatalogBottomNav";
+
 import CatalogProductCard from "../components/CatalogProductCard";
 
 /* ──────────────────────────────────────────
@@ -122,7 +121,7 @@ const ProductCatalog = () => {
   return (
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
       {/* ── Navbar ── */}
-      <CatalogNavbar />
+  
 
       <main className="min-h-screen">
         {/* ── Hero ── */}
@@ -386,9 +385,8 @@ const ProductCatalog = () => {
         </div>
       </footer>
 
-      {/* ── Mobile spacing + Bottom Nav ── */}
-      <div className="h-20 md:hidden" />
-      <CatalogBottomNav activePath="/catalog" />
+    
+    
     </div>
   );
 };

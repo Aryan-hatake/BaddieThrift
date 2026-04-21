@@ -1,6 +1,6 @@
-import { register, login , getMe } from "../services/auth.api";
+import { register, login , getMe ,logout } from "../services/auth.api";
 import { useDispatch } from "react-redux";
-import { setError, setLoading, setUser } from "../auth.slice";
+import { setError, setLoading, setUser , setLogout } from "../auth.slice";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
@@ -10,6 +10,7 @@ export const useAuth = () => {
     try {
       const data = await register(fullName, email, password, contactNo);
       dispatch(setUser(data.user));
+      dispatch(setLogout(false))
       dispatch(setError(null))
     } catch (err) {
       dispatch(setError(err?.response?.data.err[0]?.msg || err.message || "Registration failed"));
@@ -25,6 +26,7 @@ export const useAuth = () => {
       identifier.includes("@") ? email = identifier : contactNo = identifier;
       const data = await login(email, contactNo, password);
       dispatch(setUser(data.user));
+      dispatch(setLogout(false))
       dispatch(setError(null))
     } catch (err) {
 
@@ -47,7 +49,29 @@ export const useAuth = () => {
       dispatch(setLoading(false))
     }
   }
+  const handleLogout = async()=>{
+    try{
+      dispatch(setLoading(true))
+      const data = await logout();
+      const isGoogleLogin = localStorage.getItem("google_login")
+      if(isGoogleLogin){
+        localStorage.removeItem("google_login")
+      }
+      dispatch(setLogout(true))
+      dispatch(setUser(null))
+    }
+    catch(err){
+      dispatch(setError(err.message))
+    }
+    finally{
+      dispatch(setLoading(false))
+    }
+  }
+  const handleLoginForGoogle = async() =>{
+    const setGoogleLogin = localStorage.setItem("google_login",true)
+    console.log(setGoogleLogin)
+  }
 
-  return { handleRegister, handleLogin, handleGetMe};
+  return { handleRegister, handleLogin, handleGetMe,handleLogout,handleLoginForGoogle};
 };
 

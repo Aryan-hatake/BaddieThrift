@@ -133,4 +133,11 @@ async function getMe(req,res) {
     user
   })
 }
-export default { register, login, google, getMe };
+async function logout(req,res) {
+  res.clearCookie("token")
+  res.status(200).json({
+    success:true,
+    message:"user logged out successfully"
+  })
+}
+export default { register, login, google, getMe,logout };

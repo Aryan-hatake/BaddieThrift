@@ -3,14 +3,15 @@ import { motion } from "framer-motion";
 import { Zap, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import GoogleAuthButton from "./GoogleAuthButton";
+import { setLogout } from "../../auth.slice";
 
 const LoginForm = () => {
   const [identifierType, setIdentifierType] = useState("email"); // "email" | "contact"
   const formRef = useRef({});
 
-  const { handleLogin } = useAuth();
+  const { handleLogin,handleLoginForGoogle } = useAuth();
   const { loading, error, user } = useSelector((state) => state.auth);
 
   const navigate = useNavigate()
@@ -19,11 +20,14 @@ const LoginForm = () => {
     e.preventDefault();
     const { identifier, password } = formRef.current;
     await handleLogin(identifier.value.trim(), password.value);
-    navigate("/")
+    user.role ==="seller" ? navigate("/seller") : navigate("/")
   };
 
  useEffect(() => {
-  if (user) {
+  if (user?.role ==="seller") {
+    navigate("/seller");
+  }
+  else if(user?.role ==="buyer"){
     navigate("/");
   }
 }, [user, navigate]);
@@ -194,7 +198,7 @@ const LoginForm = () => {
           {/* ── AUTHENTICATE Button ── */}
           <motion.button
             type="submit"
-            disabled={loading}
+        
             initial="rest"
             whileHover="hover"
             animate="rest"
@@ -206,7 +210,7 @@ const LoginForm = () => {
 
             {/* Glitch text */}
             <motion.span className="relative z-10" variants={glitchText}>
-              {loading ? "AUTHENTICATING..." : "BREACH_VAULT"}
+            BREACH_VAULT
             </motion.span>
 
             {/* Zap icon slides right */}
@@ -229,7 +233,7 @@ const LoginForm = () => {
         </div>
 
         {/* ── Google OAuth ── */}
-        <div className="mt-4">
+        <div onClick={handleLoginForGoogle} className="mt-4">
           <GoogleAuthButton label="CONTINUE VIA G_PROTOCOL" />
         </div>
 
@@ -245,13 +249,13 @@ const LoginForm = () => {
             </span>
             <div className="flex-grow h-px bg-[#1b1b1b]/10" />
           </div>
-          <a
-            href="/register"
+          <Link
+            to="/auth/register"
             className="text-center text-[10px] font-black uppercase tracking-[0.3em] hover:text-[#506600] transition-colors py-2 border border-transparent hover:border-[#ccff00]"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             INITIALIZE IDENTITY_V1.0
-          </a>
+          </Link>
         </div>
       </div>
 

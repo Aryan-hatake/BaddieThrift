@@ -26,7 +26,7 @@ const Register = () => {
             className="text-[40vw] font-black tracking-tighter uppercase select-none leading-none text-[#1b1b1b]"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
-            ASPHALT
+            BADDIE THRIFT
           </span>
         </div>
 

@@ -10,5 +10,6 @@ authRouter.post("/login",loginValidation,authController.login)
 authRouter.get("/google", passport.authenticate('google', { scope: ['profile', 'email'] }))
 authRouter.get("/google/callback",passport.authenticate("google",{session:false}),authController.google)
 authRouter.get("/getMe",authUser,authController.getMe)
+authRouter.delete("/logout",authUser,authController.logout)
  
 export default authRouter

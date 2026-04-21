@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useProduct } from "../../hooks/useProduct";
 import { useCart } from "../../../cart/hooks/useCart";
-import CatalogNavbar from "../components/CatalogNavbar";
-import CatalogBottomNav from "../components/CatalogBottomNav";
+import { addToArchive, removeFromArchive } from "../../store/archive.slice";
+
 
 /* ─────────────────────────────────────────
    Helpers
@@ -158,12 +158,15 @@ const Skeleton = () => (
 const ProductDetails = () => {
   const { id, variantId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { handleProductDetails } = useProduct();
   const { handleAddToCart } = useCart();
 
   const { selectedProduct: product, loading } = useSelector((s) => s.product);
-  const { user } = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth);
+  const archiveItems = useSelector((s) => s.archive.items);
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(null);
+  const [archiveFeedback, setArchiveFeedback] = useState(false);
 
   useEffect(() => {
     if (id) handleProductDetails(id);
@@ -186,7 +189,7 @@ const ProductDetails = () => {
   if (loading) {
     return (
       <div className="bg-[#f9f9f9] min-h-screen">
-        <CatalogNavbar />
+
         <Skeleton />
       </div>
     );
@@ -195,7 +198,7 @@ const ProductDetails = () => {
   if (!product) {
     return (
       <div className="bg-[#f9f9f9] min-h-screen">
-        <CatalogNavbar />
+        
         <div className="flex flex-col items-center justify-center py-32 gap-6">
           <span className="material-symbols-outlined text-6xl text-[#5e5e5e]">
             inventory_2
@@ -261,8 +264,7 @@ const ProductDetails = () => {
 
   return (
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
-      <CatalogNavbar />
-
+     
       {/* ── Breadcrumb ── */}
       <nav className="px-6 py-3 border-b border-black/10 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest font-['Space_Grotesk'] text-[#5e5e5e]">
         <button
@@ -471,13 +473,32 @@ const ProductDetails = () => {
               </button>
               <button
                 id="save-to-archive-btn"
-                className="w-full border-2 border-black bg-transparent py-5 font-black text-sm tracking-tighter uppercase flex items-center justify-center gap-2 hover:bg-[#f3f3f3] transition-colors"
+                onClick={() => {
+                  const isAlready = archiveItems.some((i) => i._id === product._id);
+                  if (isAlready) {
+                    dispatch(removeFromArchive(product._id));
+                    setArchiveFeedback(false);
+                  } else {
+                    dispatch(addToArchive(product));
+                    setArchiveFeedback(true);
+                    setTimeout(() => setArchiveFeedback(false), 2000);
+                  }
+                }}
+                className={`w-full border-2 border-black py-5 font-black text-sm tracking-tighter uppercase flex items-center justify-center gap-2 transition-all ${
+                  archiveItems.some((i) => i._id === product._id)
+                    ? "bg-[#ccff00] text-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                    : "bg-transparent hover:bg-[#f3f3f3]"
+                }`}
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                <span className="material-symbols-outlined text-base leading-none">
+                <span className="material-symbols-outlined text-base leading-none" style={{ fontVariationSettings: archiveItems.some((i) => i._id === product._id) ? "'FILL' 1" : "'FILL' 0" }}>
                   favorite
                 </span>
-                SAVE TO ARCHIVE
+                {archiveFeedback
+                  ? "SAVED! VIEW ARCHIVE →"
+                  : archiveItems.some((i) => i._id === product._id)
+                  ? "IN YOUR ARCHIVE"
+                  : "SAVE TO ARCHIVE"}
               </button>
               <button
                 id="back-to-catalog-btn"
@@ -641,7 +662,7 @@ const ProductDetails = () => {
       </footer>
 
       <div className="h-20 md:hidden" />
-      <CatalogBottomNav activePath="/catalog" />
+
     </div>
   );
 };

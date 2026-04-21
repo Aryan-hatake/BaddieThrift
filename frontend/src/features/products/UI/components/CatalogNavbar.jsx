@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-
+import { useAuth } from "../../../auth/hooks/useAuth";
 const CatalogNavbar = ({ cartCount: cartCountProp }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
-
+  
     const cartItems = useSelector((state) => state.cart?.cartItems ?? []);
     const user = useSelector((state) => state.auth?.user);
+    const archiveCount = useSelector((state) => state.archive?.items?.length ?? 0);
 
     // Prop overrides Redux count (for pages that track their own state)
     const bagCount =
@@ -19,9 +21,11 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
         if (user?._id) {
             navigate(`/cart/${user._id}`);
         } else {
-            navigate("/login");
+            navigate("/auth/login");
         }
     };
+
+    const {handleLogout} = useAuth()
 
     return (
         <header className="flex justify-between items-center px-6 py-4 w-full bg-[#f9f9f9] border-b-2 border-black sticky top-0 z-[100]">
@@ -30,7 +34,7 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
                 <button
                     id="catalog-menu-btn"
                     onClick={() => setMenuOpen((p) => !p)}
-                    className="hover:bg-[#ccff00] hover:text-black transition-colors p-1 flex items-center justify-center"
+                    className="hover:bg-[#ccff00] md:hidden hover:text-black transition-colors p-1 flex items-center justify-center"
                 >
                     <span className="material-symbols-outlined text-[#1b1b1b]">
                         {menuOpen ? "close" : "menu"}
@@ -47,24 +51,38 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex gap-8 text-[#1b1b1b] font-['Space_Grotesk'] text-sm font-bold tracking-widest">
-                <button
-                    onClick={() => navigate("/catalog")}
-                    className="text-[#506600] transition-colors uppercase"
-                >
-                    SHOP
-                </button>
-                <button className="hover:text-[#506600] transition-colors uppercase">
-                    EDITORIAL
-                </button>
-                <button className="hover:text-[#506600] transition-colors uppercase">
-                    ARCHIVE
-                </button>
-                <button
-                    onClick={() => navigate("/login")}
-                    className="hover:text-[#506600] transition-colors uppercase"
-                >
-                    LOGIN
-                </button>
+                <Link to="/">
+                    <button
+                        className={`transition-colors uppercase ${location.pathname === '/' ? 'text-[#506600]' : 'hover:text-[#506600]'}`}
+                    >
+                        SHOP
+                    </button>
+                </Link>
+                <Link to="/editorial">
+                    <button className="hover:text-[#506600] transition-colors uppercase">
+                        EDITORIAL
+                    </button>
+                </Link>
+                <Link to="/archive">
+                    <button
+                        className={`transition-colors uppercase relative ${location.pathname === '/archive' ? 'text-[#506600] underline decoration-2 underline-offset-4' : 'hover:text-[#506600]'}`}
+                    >
+                        ARCHIVE
+                        {archiveCount > 0 && (
+                            <span className="absolute -top-2 -right-3 bg-[#ccff00] text-black text-[8px] font-black w-4 h-4 flex items-center justify-center font-['Space_Grotesk'] border border-black">
+                                {archiveCount > 9 ? "9+" : archiveCount}
+                            </span>
+                        )}
+                    </button>
+                </Link>
+                <Link to={"/auth/login"}>
+                    <button
+                        onClick={!user ? null : handleLogout}
+                        className="hover:text-[#506600] transition-colors uppercase"
+                    >
+                        {!user ? "LOGIN" : "LOGOUT"}
+                    </button>
+                </Link>
             </nav>
 
             {/* Right — Bag icon */}
@@ -95,16 +113,22 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
                             className="px-6 py-4 text-left font-['Space_Grotesk'] font-black text-sm uppercase tracking-widest hover:bg-[#ccff00] transition-colors border-b border-black/10"
                             onClick={() => {
                                 setMenuOpen(false);
-                                if (item === "SHOP") navigate("/catalog");
+                                if (item === "SHOP") navigate("/");
+                                if (item === "ARCHIVE") navigate("/archive");
                             }}
                         >
                             {item}
+                            {item === "ARCHIVE" && archiveCount > 0 && (
+                                <span className="ml-2 bg-[#ccff00] text-black text-[8px] font-black px-1.5 py-0.5 border border-black">
+                                    {archiveCount}
+                                </span>
+                            )}
                         </button>
                     ))}
                     <button
                         onClick={() => {
                             setMenuOpen(false);
-                            navigate("/login");
+                            navigate("/auth/login");
                         }}
                         className="px-6 py-4 text-left font-['Space_Grotesk'] font-black text-sm uppercase tracking-widest hover:bg-[#ccff00] transition-colors border-b border-black/10"
                     >

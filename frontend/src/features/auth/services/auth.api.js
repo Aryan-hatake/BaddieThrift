@@ -26,3 +26,8 @@ export async function getMe() {
         console.log("recieved err in response")
     }
 }
+
+export async function logout() {
+    const res = await api.delete("/logout")
+    return res.data
+}

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import { Navigate } from "react-router-dom";
 
 const Protected = ({ children }) => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -13,7 +13,7 @@ const Protected = ({ children }) => {
     if (loading) return;
 
     if (!user) {
-      navigate("/login");
+      navigate("/auth/login");
       return
     }
 
@@ -23,7 +23,7 @@ const Protected = ({ children }) => {
     }
   }, [user, loading, navigate]);
 
-    if (!user || user.role !== "seller") return null;
+    if (!user || user.role !== "seller") return <Navigate to="/" replace />;
 
   return children;
 };

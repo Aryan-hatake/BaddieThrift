@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useCart } from "../../hooks/useCart";
-import CatalogNavbar from "../../../products/UI/components/CatalogNavbar";
-import CatalogBottomNav from "../../../products/UI/components/CatalogBottomNav";
+
 
 /* ─────────────────────────────────────────
    Helpers
@@ -197,7 +196,7 @@ const Cart = () => {
 
     return (
         <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
-            <CatalogNavbar />
+         
 
             {/* ── Hero Header ── */}
             <main className="pt-12 pb-24 px-6 md:px-10 max-w-screen-2xl mx-auto">
@@ -247,7 +246,7 @@ const Cart = () => {
                                 <SkeletonRow />
                             </>
                         ) : resolvedItems.length === 0 ? (
-                            <EmptyBag onShop={() => navigate("/catalog")} />
+                            <EmptyBag onShop={() => navigate("/")} />
                         ) : (
                             resolvedItems.map((item, idx) => (
                                 <div
@@ -356,7 +355,7 @@ const Cart = () => {
                         {/* Continue shopping link */}
                         {resolvedItems.length > 0 && !loading && (
                             <button
-                                onClick={() => navigate("/catalog")}
+                                onClick={() => navigate("/")}
                                 className="self-start flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#5e5e5e] hover:text-[#506600] transition-colors border-b-2 border-transparent hover:border-[#506600] pb-0.5"
                                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                             >
@@ -548,7 +547,7 @@ const Cart = () => {
                             ].map((rec) => (
                                 <button
                                     key={rec.name}
-                                    onClick={() => navigate("/catalog")}
+                                    onClick={() => navigate("/")}
                                     className="group text-left"
                                 >
                                     <div className="aspect-[3/4] bg-[#e8e8e8] border-2 border-black overflow-hidden mb-3">
@@ -615,9 +614,8 @@ const Cart = () => {
                 </div>
             </footer>
 
-            {/* Mobile bottom spacer */}
-            <div className="h-20 md:hidden" />
-            <CatalogBottomNav activePath="/cart" />
+       
+           
         </div>
     );
 };
