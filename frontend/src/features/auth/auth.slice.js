@@ -6,7 +6,7 @@ export  const authSlice = createSlice({
         user:null,
         loading:true,
         error:null,
-        logout: localStorage.getItem("google_login") ? false : true
+        logout: localStorage.getItem("google_login") ? false : localStorage.getItem("login") ? false : true
     },
     reducers:{
         setUser:(state,action)=>{

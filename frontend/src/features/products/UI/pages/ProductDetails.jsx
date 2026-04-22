@@ -391,7 +391,7 @@ const ProductDetails = () => {
                       const isSelected = selectedVariantIdx === i;
                       const isOutOfStock = (v.stock ?? 0) === 0;
                       const attrEntries = Object.entries(v.attribute ?? {});
-                 
+                   
                       const displayText = attrEntries.map(([, val]) => val).join(" / ");
                       const tooltipText = attrEntries.map(([k, val]) => `${k}: ${val}`).join(", ");
 
@@ -517,7 +517,7 @@ const ProductDetails = () => {
               </button>
               <button
                 id="back-to-catalog-btn"
-                onClick={() => navigate("/catalog")}
+                onClick={() => navigate("/")}
                 className="w-full border-2 border-black/20 bg-transparent py-4 font-bold text-[11px] tracking-widest uppercase flex items-center justify-center gap-2 hover:border-black hover:bg-[#f3f3f3] transition-colors text-[#5e5e5e] hover:text-[#1b1b1b]"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >

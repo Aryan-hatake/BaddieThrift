@@ -1,7 +1,7 @@
 import { register, login , getMe ,logout } from "../services/auth.api";
 import { useDispatch } from "react-redux";
 import { setError, setLoading, setUser , setLogout } from "../auth.slice";
-
+import { setCartItems } from "../../cart/store/cart.slice";
 export const useAuth = () => {
   const dispatch = useDispatch();
 
@@ -9,6 +9,7 @@ export const useAuth = () => {
     dispatch(setLoading(true));
     try {
       const data = await register(fullName, email, password, contactNo);
+      localStorage.setItem("login",true)
       dispatch(setUser(data.user));
       dispatch(setLogout(false))
       dispatch(setError(null))
@@ -25,6 +26,7 @@ export const useAuth = () => {
       let email, contactNo;
       identifier.includes("@") ? email = identifier : contactNo = identifier;
       const data = await login(email, contactNo, password);
+      localStorage.setItem("login",true)
       dispatch(setUser(data.user));
       dispatch(setLogout(false))
       dispatch(setError(null))
@@ -54,10 +56,15 @@ export const useAuth = () => {
       dispatch(setLoading(true))
       const data = await logout();
       const isGoogleLogin = localStorage.getItem("google_login")
+      const isLogin =  localStorage.getItem("login")
       if(isGoogleLogin){
         localStorage.removeItem("google_login")
       }
+      if(isLogin){
+        localStorage.removeItem("login")
+      }
       dispatch(setLogout(true))
+      dispatch(setCartItems([]))
       dispatch(setUser(null))
     }
     catch(err){
