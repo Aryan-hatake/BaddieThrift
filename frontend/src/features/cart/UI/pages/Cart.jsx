@@ -134,7 +134,7 @@ const Cart = () => {
     const resolveItem = (item) => {
         const product = item.product ?? {};
         const variant = item.variant ?? null;
-
+        
         // Prefer variant price if available
         const rawAmount =
             variant?.price?.priceAmount ??
@@ -158,6 +158,12 @@ const Cart = () => {
                   .map(([k, v]) => `${k.toUpperCase()}: ${v}`)
                   .join(" / ")
             : null;
+        console.log(product?.title)
+        console.log(rawAmount)
+        console.log(images)
+        console.log(product?._id)
+        console.log(variant)
+        console.log(attrLabel)
 
         return {
             title: product?.title ?? "Unknown Product",
@@ -172,7 +178,7 @@ const Cart = () => {
             stock: variant?.stock ?? product?.stock ?? 0,
         };
     };
-
+    console.log(cartItems)
     const resolvedItems = cartItems.map(resolveItem);
 
     const subtotal = resolvedItems.reduce(

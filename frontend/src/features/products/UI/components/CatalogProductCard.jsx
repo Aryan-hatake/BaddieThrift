@@ -17,8 +17,10 @@ const CatalogProductCard = ({ product }) => {
     images = [],
     stock = 0,
     status,
+    variants
   } = product;
 
+  
   const thumb = images?.[0];
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency;
   const isSoldOut = stock === 0;
@@ -102,7 +104,7 @@ const CatalogProductCard = ({ product }) => {
       {!isSoldOut && (
         <button
           id={`add-to-bag-${_id}`}
-          onClick={() => navigate(`/product/${_id}`)}
+          onClick={() => navigate(`/product/${_id}/${variants[0]._id}`)}
           className="w-full py-3 px-2 border-t-2 border-black bg-black text-white font-['Space_Grotesk'] font-black uppercase tracking-[0.15em] opacity-0 group-hover:opacity-100 transition-opacity text-xs shrink-0"
         >
           View Product

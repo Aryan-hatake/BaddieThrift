@@ -43,8 +43,7 @@ const productSchema = new mongoose.Schema({
     variants:[
         {
             attribute:{
-                type:Map,
-                of:String
+                type:Object
             },
             stock:{
               default:0,

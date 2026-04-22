@@ -31,6 +31,7 @@ export const useCart = () => {
     const handleAddToCart = async (productId, variantId, quantity) => {
         try {
             dispatch(setLoading(true));
+            console.log(productId,variantId)
             const data = await addToCart(productId, variantId, quantity);
             dispatch(setCartItems(data.cart.items ?? data.cart));
         } catch (err) {
