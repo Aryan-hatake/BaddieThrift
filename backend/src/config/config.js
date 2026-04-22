@@ -17,9 +17,13 @@ if(!process.env.GOOGLE_CLIENT_SECRET){
 if(!process.env.IMAGEKIT_PRIVATE_KEY){
       throw Error("IMAGE KIT PRIVATE KEY NOT PROVIDED")
 }
+if(!process.env.DOMAIN){
+    throw Error("DOMAIN NOT PROVIDED")
+}
 
 const config = {
     MongoURI : process.env.MONGO_URI,
+    Domain : process.env.DOMAIN,
     GoogleClientID : process.env.GOOGLE_CLIENT_ID,
     GoogleClientSecret : process.env.GOOGLE_CLIENT_SECRET,
     JWTSecret : process.env.JWT_SECRET,

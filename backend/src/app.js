@@ -8,11 +8,16 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser'
 import productRouter from './routes/product.route.js';
 import cartRouter from './routes/cart.route.js';
+import path from 'path';
+import { fileURLToPath } from "url";
 
 const app = express()
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(cors({
-    origin:"http://localhost:5173",
+    origin:config.Domain,
     credentials:true
 }))
 
@@ -20,6 +25,7 @@ app.use(express.json());
 app.use(morgan("dev"))
 app.use(cookieParser())
 app.use(express.urlencoded({extended:true}))
+app.use(express.static('./public'));
 
 app.use(passport.initialize());
 
@@ -38,4 +44,8 @@ app.use("/api/auth",authRouter)
 app.use("/api/product",productRouter)
 app.use("/api/cart",cartRouter)
 
+
+app.get("*name", (req, res) => {
+  res.sendFile(path.join(__dirname,"..","./public/index.html"));
+});
 export default app;

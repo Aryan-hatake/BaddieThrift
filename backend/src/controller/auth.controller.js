@@ -122,7 +122,7 @@ async function google(req, res) {
   
   res.cookie("token",token)
 
-  res.redirect("http://localhost:5173/");
+  res.redirect("https://baddiethrift.onrender.com/");
 }
 async function getMe(req,res) {
   const user = req.user

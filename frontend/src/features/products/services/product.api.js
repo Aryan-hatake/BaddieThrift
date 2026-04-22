@@ -26,3 +26,13 @@ export async function getProductDetails(id){
     const res = await productApi.get(`/details/${id}`)
     return res.data
 }
+
+export async function updateProduct(id,data) {
+    const res = await productApi.put(`/update/${id}`, data,{ headers: { 'Content-Type': 'multipart/form-data' } })
+    return res.data
+}
+
+export async function deleteProduct(id) {
+    const res = await productApi.delete(`/delete/${id}`)
+    return res.data
+}

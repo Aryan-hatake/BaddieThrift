@@ -21,5 +21,6 @@ productRouter.get(
 productRouter.post("/createProduct",authUser,upload.any(),productController.createProducts)
 productRouter.get("/getAllProducts", productController.getAllProducts);
 productRouter.get("/details/:productId",productController.productDetails)
-
+productRouter.put("/update/:productId",authUser,upload.any(),productController.updateOneProduct)
+productRouter.delete("/delete/:productId",authUser,productController.deleteOneProduct)
 export default productRouter;

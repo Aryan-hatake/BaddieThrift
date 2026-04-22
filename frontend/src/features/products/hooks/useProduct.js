@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
 import { setError, setLoading, setProducts, setCatalogProducts, setSelectedProduct } from '../store/product.slice';
-import { createProduct, getSellerProducts, getAllProducts, getProductDetails } from '../services/product.api';
+import { createProduct, getSellerProducts, getAllProducts, getProductDetails ,updateProduct ,deleteProduct } from '../services/product.api';
 
 export function useProduct() {
 
@@ -72,6 +72,38 @@ export function useProduct() {
          dispatch(setLoading(false))
       }
    }
+   
+   async function handleUpdateProduct(data,id) {
+      console.log("data",data)
+      dispatch(setLoading(true))
+      try {
+         const newImageArr = data?.images?.map((image) => {
+            return image ? image?.file : null
+         })
+         data.images = newImageArr
+         const response = await updateProduct(id,data)
+         return response?.product
+      }
+      catch (err) {
+         dispatch(setError(err.message))
+      }
+      finally {
+         dispatch(setLoading(false))
+      }
+   }
+   async function handleDeleteProduct(id) {
+      try{
+         dispatch(setLoading(true))
+         const response = await deleteProduct(id);
+         return response
+      }
+      catch(err){
+         dispatch(setError(err?.message ?? err))
+      }
+      finally{
+         dispatch(setLoading(false))
+      }
+   }
 
-   return { handleCreateProduct, handleSellerProducts, handleGetAllProducts , handleProductDetails }
+   return { handleCreateProduct, handleSellerProducts, handleGetAllProducts , handleProductDetails,handleUpdateProduct,handleDeleteProduct }
 }

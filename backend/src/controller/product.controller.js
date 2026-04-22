@@ -1,5 +1,6 @@
 import { uploadToImageKit } from "../services/imageKit.service.js";
 import productModel from "../model/product.model.js";
+import { findOneProduct , updateProduct , deleteProduct } from "../dao/product.dao.js";
 
 async function getAllSellerProducts(req, res) {
   if (!req.isSeller)
@@ -163,4 +164,96 @@ async function productDetails(req,res) {
 
 
 }
-export default { getAllSellerProducts, getAllProducts, createProducts , productDetails };
+
+async function updateOneProduct(req,res) {
+    const {productId} = req.params
+  
+    const {title,description,price:{amount,currency},variants,stock,status,sku} = req.body
+
+    
+    const product = await findOneProduct(productId)
+
+    if(!product || product.seller.toString() !== req.userId.toString()) return res.status(401).json({
+        success:false,
+        message:"unauthorized"
+    })
+    
+    const variantImgs = {}
+    for (const img of req.files) {
+      if (!img.fieldname.startsWith("variant")) continue;
+
+      const key = img.fieldname.split("[").slice(0, 2).join("[");
+
+      if (!variantImgs[key]) {
+        variantImgs[key] = [];
+      }
+
+      const uploaded = await uploadToImageKit(img.originalname, img.buffer);
+      variantImgs[key].push(uploaded);
+    }
+    
+    const productImages = req.files.filter((img, idx) =>
+    img.fieldname.startsWith("images[]"),
+  );
+  let modifiedProductImages = []
+    if(productImages.length>0){
+    modifiedProductImages = await Promise.all(
+    productImages.map((img, idx) => {
+      return uploadToImageKit(img.originalname, img.buffer);
+    }),
+  );
+  }
+    const updated = await updateProduct(productId,{
+      title:title || product.title,
+      description:description || product.description,
+      status:status || product.status,
+      stock:stock || product.stock,
+      sku:sku || product.sku,
+      price: {
+        amount: amount || product.price.amount,
+        currency: currency || product.price.currency,
+      },
+      variants:variants.length !== 0 ? variants.map((e, i) => {
+        const key = `variants[${i}]`;
+        return {
+          attribute:JSON.parse(JSON.stringify(e.attribute)),
+          stock: e.stock || 0,
+          price: e.price || {
+            amount: e.price.amount || product.price.amount,
+            currency: e.price.currency || product.price.currency,
+          },
+          images: variantImgs[key] || [],
+        };
+      }): product.variants,
+      images:modifiedProductImages.length > 0 ? modifiedProductImages : product.images,
+    })
+
+    return res.status(200).json({
+        success:true,
+        message:"product updated successfully",
+        updated
+    })
+
+    
+    
+}
+
+async function deleteOneProduct(req,res) {
+    const {productId} = req.params
+
+    const product = await findOneProduct(productId)
+
+    if(!product || product.seller.toString() !== req.userId.toString()) return res.status(401).json({
+        success:false,
+        message:"unauthorized"
+    })
+
+    const deleted = await deleteProduct(productId)
+    return res.status(200).json({
+        success:true,
+        message:"product deleted successfully",
+        deleted
+    })
+}
+
+export default { getAllSellerProducts, getAllProducts, createProducts , productDetails , updateOneProduct , deleteOneProduct };

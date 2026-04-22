@@ -1,22 +1,28 @@
-import React from "react";
+import React from 'react'
 import { useNavigate } from "react-router-dom";
 
 import SellerBottomNav from "../components/SellerBottomNav";
-import CreateProductForm from "../components/CreateProductForm";
+import ManageForm from "../components/ManageForm";
 import { useProduct } from "../../hooks/useProduct";
+import { useParams } from "react-router-dom";
+
+const SellerManageProduct = () => {
+    const navigate = useNavigate();
+  const { handleUpdateProduct, handleDeleteProduct } = useProduct();
+
+  const {id} = useParams()
 
 
-
-const CreateProduct = () => {
-  const navigate = useNavigate();
-  const { handleCreateProduct } = useProduct();
-  /* ── Submit handler: wire up to your API later ── */
   const handleSubmit = async (data) => {
-
-    handleCreateProduct(data);
-    // navigate("/seller/inventory");
+    console.log("working?", data)
+    handleUpdateProduct(data,id);
+    // navigate("/seller"); 
   };
-
+ 
+  const handleDelete = () => {
+    handleDeleteProduct(id);
+    navigate("/seller");
+  };
   const handleDiscard = () => {
     navigate(-1);
   };
@@ -55,9 +61,9 @@ const CreateProduct = () => {
               className="text-5xl font-black tracking-tighter leading-none mb-2 uppercase"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              CREATE
+             UPDATE
               <br />
-              NEW_ITEM
+              ITEM
             </h1>
             <p
               className="text-[10px] text-[#5e5e5e] font-bold tracking-widest"
@@ -84,13 +90,13 @@ const CreateProduct = () => {
         </header>
 
         {/* ── Form ── */}
-        <CreateProductForm onSubmit={handleSubmit} onDiscard={handleDiscard} />
+        <ManageForm onSubmit={handleSubmit}  onDelete={handleDelete}  onDiscard={handleDiscard} />
       </main>
 
       {/* ── Mobile Bottom Nav ── */}
       <SellerBottomNav />
     </>
   );
-};
+}
 
-export default CreateProduct;
+export default SellerManageProduct

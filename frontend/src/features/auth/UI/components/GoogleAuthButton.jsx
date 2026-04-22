@@ -56,7 +56,7 @@ const GoogleAuthButton = () => {
   const handleClick = () => {
     // Point this to your backend's Google OAuth initiation route
 
-    window.location.href = "http://localhost:5173/api/auth/google";
+    window.location.href = "https://baddiethrift.onrender.com/api/auth/google";
   };
 
   return (

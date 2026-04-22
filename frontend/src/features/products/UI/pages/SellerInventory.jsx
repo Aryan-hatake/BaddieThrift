@@ -22,7 +22,7 @@ const FILTERS = [
 ────────────────────────────────────────── */
 const SellerInventory = () => {
   const navigate = useNavigate();
-  const { handleSellerProducts } = useProduct();
+  const { handleSellerProducts,handleProductDetails } = useProduct();
 
   const { sellerProducts, loading } = useSelector((s) => s.product);
 
@@ -223,7 +223,7 @@ const SellerInventory = () => {
                 product={product}
                 onAction={(id, status) => {
                   if (status === "draft") navigate(`/seller/edit-product/${id}`);
-                  else navigate(`/seller/manage-product/${id}`);
+                  else navigate(`/seller/manage-product/${id}`); handleProductDetails(id);
                 }}
               />
             ))}

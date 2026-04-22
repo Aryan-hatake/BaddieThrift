@@ -11,6 +11,7 @@ import Cart from "../features/cart/UI/pages/Cart";
 import ProductLayout from "../layout/ProductLayout";
 import AuthLayout from "../layout/AuthLayout";
 import SellerLayout from "../layout/SellerLayout";
+import SellerManageProduct from "../features/products/UI/pages/sellerManageProduct";
 
 export const router = createBrowserRouter([
   {
@@ -66,6 +67,14 @@ export const router = createBrowserRouter([
         element: (
           <Protected>
             <SellerInventory />
+          </Protected>
+        )
+      },
+      {
+        path: "manage-product/:id",
+        element: (
+          <Protected>
+            <SellerManageProduct />
           </Protected>
         )
       }
