@@ -474,7 +474,7 @@ const Archive = () => {
       </section>
 
       {/* Mobile spacer */}
-      <div className="h-20 md:hidden" />
+    
     </div>
   );
 };

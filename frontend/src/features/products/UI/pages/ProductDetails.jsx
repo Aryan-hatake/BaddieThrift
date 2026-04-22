@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useProduct } from "../../hooks/useProduct";
 import { useCart } from "../../../cart/hooks/useCart";
 import { addToArchive, removeFromArchive } from "../../store/archive.slice";
-
+import { Link } from "react-router-dom";
 
 /* ─────────────────────────────────────────
    Helpers
@@ -52,7 +52,7 @@ const ImageGallery = ({ images = [], title }) => {
 
   if (all.length === 0) {
     return (
-      <div className="aspect-[4/5] bg-[#e2e2e2] flex flex-col items-center justify-center gap-3">
+      <div className="flex-1 min-h-0 bg-[#e2e2e2] flex flex-col items-center justify-center gap-3">
         <span className="material-symbols-outlined text-6xl text-[#5e5e5e]">
           image_not_supported
         </span>
@@ -67,17 +67,17 @@ const ImageGallery = ({ images = [], title }) => {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Main image */}
-      <div className="relative overflow-hidden bg-[#e8e8e8] group">
+    <div className="flex flex-col justify-center  h-full max-w-[80%] min-h-0 gap-2">
+      {/* Main image — fills all available height */}
+      <div className="relative overflow-hidden bg-[#e8e8e8] group flex-1 min-h-0">
         <img
           src={all[active]}
           alt={`${title} — view ${active + 1}`}
-          className="w-full aspect-[4/5] object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
         />
         {/* Index badge */}
         <span
-          className="absolute top-4 left-4 bg-black text-white text-[9px] font-black px-2 py-1 uppercase tracking-widest"
+          className="absolute top-3 left-3 bg-black text-white text-[9px] font-black px-2 py-1 uppercase tracking-widest"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
           {String(active + 1).padStart(2, "0")} / {String(all.length).padStart(2, "0")}
@@ -108,9 +108,9 @@ const ImageGallery = ({ images = [], title }) => {
         )}
       </div>
 
-      {/* Thumbnails */}
+      {/* Thumbnails — fixed small strip */}
       {all.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-1.5 flex-shrink-0">
           {all.map((src, i) => (
             <button
               key={i}
@@ -165,14 +165,15 @@ const ProductDetails = () => {
   const { selectedProduct: product, loading } = useSelector((s) => s.product);
   const { user } = useSelector((state) => state.auth);
   const archiveItems = useSelector((s) => s.archive.items);
-  const [selectedVariantIdx, setSelectedVariantIdx] = useState(null);
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const [archiveFeedback, setArchiveFeedback] = useState(false);
+  const [variantError, setVariantError] = useState(false);
 
   useEffect(() => {
     if (id) handleProductDetails(id);
   }, [id]);
 
-  /* Sync selected variant from URL when product loads */
+  /* Sync selected variant from URL; auto pre-select first available when no variantId */
   useEffect(() => {
     if (!product?.variants?.length) {
       setSelectedVariantIdx(null);
@@ -180,9 +181,16 @@ const ProductDetails = () => {
     }
     if (variantId) {
       const idx = product.variants.findIndex((v) => v._id === variantId);
-      setSelectedVariantIdx(idx !== -1 ? idx : null);
+      setSelectedVariantIdx(idx !== -1 ? idx : 0);
     } else {
-      setSelectedVariantIdx(null);
+      /* Auto-select: prefer first in-stock variant, fall back to index 0 */
+      const firstAvailable = product.variants.findIndex((v) => (v.stock ?? 0) > 0);
+      const defaultIdx = firstAvailable !== -1 ? firstAvailable : 0;
+      setSelectedVariantIdx(defaultIdx);
+      const defaultVariant = product.variants[defaultIdx];
+      if (defaultVariant?._id) {
+        navigate(`/product/${id}/${defaultVariant._id}`, { replace: true });
+      }
     }
   }, [product?._id, variantId]);
 
@@ -255,7 +263,7 @@ const ProductDetails = () => {
   const variantImages = selectedVariant?.images?.filter(Boolean) ?? [];
   const activeImages = variantImages.length > 0 ? variantImages : images.filter(Boolean);
 
-  const isSoldOut = status !== "active" || activeStock === 0;
+  const isSoldOut =  activeStock === 0;
 
   const isNew = (() => {
     const diff = (Date.now() - new Date(createdAt)) / (1000 * 60 * 60 * 24);
@@ -280,8 +288,8 @@ const ProductDetails = () => {
       <main>
         <div className="flex flex-col lg:flex-row w-full">
 
-          {/* ── Left: Image Gallery ── */}
-          <section className="w-full lg:w-[60%] bg-[#f3f3f3] p-4 md:p-8 lg:p-12 border-r-2 border-black">
+          {/* ── Left: Image Gallery — sticky, fits within 100vh ── */}
+          <section className="w-full items-center lg:w-[60%] bg-[#f3f3f3] p-4 md:p-6 lg:p-8 border-r-2 border-black lg:sticky lg:top-[73px] lg:h-[calc(100vh-73px)] flex flex-col">
             <ImageGallery images={activeImages} title={title} />
           </section>
 
@@ -352,88 +360,87 @@ const ProductDetails = () => {
             </p>
 
             {/* ── Variants ── */}
-            {variants.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-3">
-                  <span
-                    className="text-[11px] font-black uppercase tracking-widest text-[#5e5e5e]"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    SELECT VARIANT
-                  </span>
-                  {selectedVariant && (
-                    <button
-                      onClick={() => navigate(`/product/${id}`, { replace: true })}
-                      className="text-[9px] font-black uppercase tracking-widest text-[#ba1a1a] hover:underline"
+            {variants.length > 0 && (() => {
+              /* Detect the primary attribute key for the label (e.g. "size", "color") */
+              const primaryKey = Object.keys(variants[0]?.attribute ?? {})[0] ?? "variant";
+              return (
+                <div className="mb-6">
+                  {/* Label row */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span
+                      className="text-[11px] font-black uppercase tracking-widest text-[#5e5e5e]"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      Clear ×
-                    </button>
+                      SELECT {primaryKey.toUpperCase()}
+                    </span>
+                    {selectedVariant && (
+                      <button
+                        onClick={() => navigate(`/product/${id}`, { replace: true })}
+                        className="text-[9px] font-black uppercase tracking-widest text-[#ba1a1a] hover:underline"
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      >
+                        Clear ×
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Compact chip grid */}
+    
+                  <div className="flex flex-wrap gap-2">
+                    {variants.map((v, i) => {
+                      const isSelected = selectedVariantIdx === i;
+                      const isOutOfStock = (v.stock ?? 0) === 0;
+                      const attrEntries = Object.entries(v.attribute ?? {});
+                 
+                      const displayText = attrEntries.map(([, val]) => val).join(" / ");
+                      const tooltipText = attrEntries.map(([k, val]) => `${k}: ${val}`).join(", ");
+
+                      return (
+                        <button
+                          key={v._id ?? i}
+                          id={`variant-btn-${i}`}
+                          title={isOutOfStock ? `${tooltipText} — Out of stock` : tooltipText}
+                          onClick={() => {
+                            setVariantError(false);
+                            setSelectedVariantIdx(i);
+                            if (isSelected) {
+                              navigate(`/product/${id}`, { replace: true });
+                            } else {
+                              navigate(`/product/${id}/${v._id}`, { replace: true });
+                            }
+                          }}
+                          disabled={isOutOfStock}
+                          className={`min-w-[52px] px-4 py-2.5 border-2 font-black text-xs uppercase tracking-widest transition-all
+                            ${
+                              isSelected
+                                ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
+                                : isOutOfStock
+                                  ? "border-black/20 bg-[#f3f3f3] text-black/35 cursor-not-allowed line-through"
+                                  : "border-black/30 bg-white hover:border-black hover:shadow-[2px_2px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                            }`}
+                          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                        >
+                          {displayText}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Inline error when variant not selected */}
+                  {variantError && (
+                    <div className="mt-2.5 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm leading-none text-[#ba1a1a]">error</span>
+                      <span
+                        className="text-[10px] font-black uppercase tracking-widest text-[#ba1a1a]"
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      >
+                        Please select a {primaryKey} to continue
+                      </span>
+                    </div>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  {variants.map((v, i) => {
-                    const isSelected = selectedVariantIdx === i;
-                    const isOutOfStock = (v.stock ?? 0) === 0;
-                    const vSymbol = currencySymbol(v.price?.priceCurrency ?? "USD");
-
-                    return (
-                      <button
-                        key={v._id ?? i}
-                        id={`variant-btn-${i}`}
-                        onClick={() => {
-                          if (isSelected) {
-                            navigate(`/product/${id}`, { replace: true });
-                          } else {
-                            navigate(`/product/${id}/${v._id}`, { replace: true });
-                          }
-                        }}
-                        disabled={isOutOfStock}
-                        className={`w-full flex items-center justify-between px-4 py-3 border-2 transition-all text-left ${isSelected
-                            ? "border-black bg-black text-white shadow-[4px_4px_0px_#ccff00]"
-                            : isOutOfStock
-                              ? "border-black/20 bg-[#f3f3f3] opacity-40 cursor-not-allowed"
-                              : "border-black/30 bg-white hover:border-black hover:shadow-[3px_3px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
-                          }`}
-                      >
-                        {/* Attributes */}
-                        <div className="flex flex-wrap gap-1.5">
-                          {Object.entries(v.attribute ?? {}).map(([k, val]) => (
-                            <span
-                              key={k}
-                              className={`text-[10px] font-black uppercase tracking-wide ${isSelected ? "text-[#ccff00]" : "text-[#1b1b1b]"
-                                }`}
-                              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                            >
-                              {k}: <span className={isSelected ? "text-white" : "text-[#506600]"}>{val}</span>
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Price + stock */}
-                        <div className="flex flex-col items-end shrink-0 ml-4">
-                          <span
-                            className={`text-sm font-black ${isSelected ? "text-[#ccff00]" : "text-[#506600]"
-                              }`}
-                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                          >
-                            {vSymbol}{Number(v.price?.priceAmount ?? 0).toFixed(2)}
-                          </span>
-                          <span
-                            className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? "text-white/60" : "text-[#5e5e5e]"
-                              }`}
-                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                          >
-                            {isOutOfStock ? "OUT OF STOCK" : `QTY: ${v.stock}`}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Stock indicator */}
             <div className="flex items-center gap-2 mb-6">
@@ -454,23 +461,31 @@ const ProductDetails = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="space-y-3 mb-10">
+            <div className="space-y-3 flex  flex-col gap-4 mb-10">
+              <Link to={user?._id ? `/cart/${user._id}` : "/auth/login"}>
               <button
                 id="add-to-bag-btn"
                 disabled={isSoldOut}
                 onClick={() => {
+                  /* Enforce variant selection when variants exist */
+                  if (variants.length > 0 && selectedVariantIdx === null) {
+                    setVariantError(true);
+                    setTimeout(() => setVariantError(false), 3500);
+                    /* Scroll variant section into view */
+                    document.getElementById("variant-btn-0")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    return;
+                  }
                   if (user?._id) {
                     handleAddToCart(id, variantId, 1);
-                    navigate(`/cart/${user._id}`);
-                  } else {
-                    navigate("/login");
-                  }
+                  
+                  } 
                 }}
                 className="w-full bg-[#ccff00] text-black py-5 font-black text-lg tracking-tighter uppercase border-2 border-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
+                >
                 {isSoldOut ? "SOLD OUT" : "ADD TO BAG"}
               </button>
+                </Link>
               <button
                 id="save-to-archive-btn"
                 onClick={() => {
@@ -661,7 +676,6 @@ const ProductDetails = () => {
         </div>
       </footer>
 
-      <div className="h-20 md:hidden" />
 
     </div>
   );

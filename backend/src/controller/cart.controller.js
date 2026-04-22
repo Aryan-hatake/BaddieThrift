@@ -28,9 +28,9 @@ async function addToCart(req, res) {
     const { productId, variantId, quantity = 1 } = req.body;
 
     const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
-
+    console.log(query)
     const productExist = await productModel.findOne(query);
-
+    console.log(productExist)
     if (!productExist) {
       return res.status(404).json({
         success: false,

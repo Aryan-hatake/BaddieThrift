@@ -6,7 +6,7 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
-  
+
     const cartItems = useSelector((state) => state.cart?.cartItems ?? []);
     const user = useSelector((state) => state.auth?.user);
     const archiveCount = useSelector((state) => state.archive?.items?.length ?? 0);
@@ -25,7 +25,7 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
         }
     };
 
-    const {handleLogout} = useAuth()
+    const { handleLogout } = useAuth()
 
     return (
         <header className="flex justify-between items-center px-6 py-4 w-full bg-[#f9f9f9] border-b-2 border-black sticky top-0 z-[100]">
@@ -58,11 +58,7 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
                         SHOP
                     </button>
                 </Link>
-                <Link to="/editorial">
-                    <button className="hover:text-[#506600] transition-colors uppercase">
-                        EDITORIAL
-                    </button>
-                </Link>
+
                 <Link to="/archive">
                     <button
                         className={`transition-colors uppercase relative ${location.pathname === '/archive' ? 'text-[#506600] underline decoration-2 underline-offset-4' : 'hover:text-[#506600]'}`}
@@ -75,6 +71,17 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
                         )}
                     </button>
                 </Link>
+
+                {
+                    user?.role === "seller" && (
+                        <Link to="/seller">
+                            <button className="hover:text-[#506600] transition-colors uppercase">
+                                INVENTORY
+                            </button>
+                        </Link>
+                    )
+
+                }
                 <Link to={"/auth/login"}>
                     <button
                         onClick={!user ? null : handleLogout}
@@ -107,48 +114,30 @@ const CatalogNavbar = ({ cartCount: cartCountProp }) => {
             {/* Mobile Menu Overlay */}
             {menuOpen && (
                 <div className="absolute top-full left-0 w-full bg-[#f9f9f9] border-b-2 border-black z-50 flex flex-col md:hidden">
-                    {["SHOP", "EDITORIAL", "ARCHIVE"].map((item) => (
-                        <button
-                            key={item}
-                            className="px-6 py-4 text-left font-['Space_Grotesk'] font-black text-sm uppercase tracking-widest hover:bg-[#ccff00] transition-colors border-b border-black/10"
-                            onClick={() => {
-                                setMenuOpen(false);
-                                if (item === "SHOP") navigate("/");
-                                if (item === "ARCHIVE") navigate("/archive");
-                            }}
-                        >
-                            {item}
-                            {item === "ARCHIVE" && archiveCount > 0 && (
-                                <span className="ml-2 bg-[#ccff00] text-black text-[8px] font-black px-1.5 py-0.5 border border-black">
-                                    {archiveCount}
-                                </span>
-                            )}
-                        </button>
+                    {["SHOP", "ARCHIVE", user?.role === "seller" && "INVENTORY" , user?._id ? "LOGOUT" : "LOGIN"].filter(Boolean).map((item) => (
+                        <Link to={item === "SHOP" ? "/" : item === "ARCHIVE" ? "/archive" : item ==="INVENTORY" ? "/seller" : "/auth/login"}>
+
+                            <button
+                                key={item}
+                                className="px-6 py-4 text-left font-['Space_Grotesk'] font-black text-sm uppercase tracking-widest hover:bg-[#ccff00] transition-colors border-b border-black/10"
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                     if(item === "LOGOUT"){
+                                        handleLogout();
+                                     }
+                                }}
+                            >
+                                {item}
+                                {item === "ARCHIVE" && archiveCount > 0 && (
+                                    <span className="ml-2 bg-[#ccff00] text-black text-[8px] font-black px-1.5 py-0.5 border border-black">
+                                        {archiveCount}
+                                    </span>
+                                )}
+                            </button>
+                        </Link>
                     ))}
-                    <button
-                        onClick={() => {
-                            setMenuOpen(false);
-                            navigate("/auth/login");
-                        }}
-                        className="px-6 py-4 text-left font-['Space_Grotesk'] font-black text-sm uppercase tracking-widest hover:bg-[#ccff00] transition-colors border-b border-black/10"
-                    >
-                        LOGIN
-                    </button>
-                    <button
-                        onClick={() => {
-                            setMenuOpen(false);
-                            handleBagClick();
-                        }}
-                        className="px-6 py-4 text-left font-['Space_Grotesk'] font-black text-sm uppercase tracking-widest hover:bg-[#ccff00] transition-colors flex items-center gap-3"
-                    >
-                        <span className="material-symbols-outlined text-base">shopping_bag</span>
-                        BAG
-                        {bagCount > 0 && (
-                            <span className="bg-black text-white text-[9px] font-black px-1.5 py-0.5 font-['Space_Grotesk']">
-                                {bagCount}
-                            </span>
-                        )}
-                    </button>
+                 
+        
                 </div>
             )}
         </header>

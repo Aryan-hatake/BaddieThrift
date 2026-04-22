@@ -19,8 +19,8 @@ async function getAllSellerProducts(req, res) {
 
 async function getAllProducts(req, res) {
   const filter = req.query;
-
-  const query = { status: "active" };
+  
+  const query = {};
 
   if (filter?.search) {
     query.$or = [
@@ -133,8 +133,10 @@ async function createProducts(req, res) {
     }),
   });
 
-    res.status(200).json({
-      message: "test 123",
+    res.status(201).json({
+      success:true,
+      message: "product created successfully",
+      product
     });
 }
 

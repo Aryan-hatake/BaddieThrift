@@ -3,11 +3,11 @@ import { router } from "./app.routes";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-
+import { useCart } from "../features/cart/hooks/useCart";
 
 function App() {
   const { handleGetMe } = useAuth();
-  
+  const {handleGetCart} = useCart()
   const user = useSelector((state) => state.auth.user);
   const errAuth = useSelector((state) => state.auth.error);
   const errProduct = useSelector((state) => state.product.error);
@@ -23,6 +23,12 @@ function App() {
       })();
     }
     }, []);
+
+  useEffect(()=>{
+     if(user){
+        handleGetCart()
+     }
+  },[user])
 
   console.log(user)
   console.log("ERR AUTH: ", errAuth);

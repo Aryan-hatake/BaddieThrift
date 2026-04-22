@@ -15,66 +15,7 @@ const FILTERS = [
   { key: "draft", label: "Draft" },
 ];
 
-/* ──────────────────────────────────────────
-   Desktop Sidebar
-────────────────────────────────────────── */
-const DesktopSidebar = ({ onNavigate }) => {
-  const navLinks = [
-    { icon: "dashboard", label: "DASHBOARD", path: "/" },
-    { icon: "inventory_2", label: "STOCK_LIST", path: "/seller/inventory", active: true },
-    { icon: "monitoring", label: "ANALYTICS", path: "#" },
-    { icon: "local_shipping", label: "SHIPMENTS", path: "#" },
-  ];
 
-  return (
-    <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-72 border-r-2 border-black bg-[#f9f9f9] flex-col pt-20 z-40">
-      <div className="px-8 py-6 border-b-2 border-black/10 mb-4">
-        <span
-          className="font-black text-black text-xl uppercase tracking-widest"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-        >
-          ADMIN_v1.0
-        </span>
-      </div>
-
-      <nav className="flex-grow flex flex-col">
-        {navLinks.map(({ icon, label, path, active }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onNavigate(path)}
-            className={`flex items-center gap-4 px-8 py-4 text-left transition-colors ${active
-              ? "bg-[#ccff00] text-black font-black"
-              : "text-[#5e5e5e] hover:bg-[#e2e2e2]"
-              }`}
-          >
-            <span className="material-symbols-outlined">{icon}</span>
-            <span
-              className="font-bold text-sm"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              {label}
-            </span>
-          </button>
-        ))}
-
-        <button
-          type="button"
-          onClick={() => onNavigate("#")}
-          className="mt-auto flex items-center gap-4 px-8 py-8 text-[#5e5e5e] hover:bg-[#e2e2e2] transition-colors"
-        >
-          <span className="material-symbols-outlined">settings</span>
-          <span
-            className="font-bold text-sm"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            SETTINGS
-          </span>
-        </button>
-      </nav>
-    </aside>
-  );
-};
 
 /* ──────────────────────────────────────────
    Main Page
@@ -115,31 +56,13 @@ const SellerInventory = () => {
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b] pb-24 lg:pb-0">
 
       {/* ── Desktop Sidebar ── */}
-      <DesktopSidebar onNavigate={(path) => path !== "#" && navigate(path)} />
+
 
       {/* ── Top Header ── */}
-      <header className="fixed top-0 left-0 lg:left-72 right-0 z-50 border-b-2 border-black bg-[#f9f9f9] h-16 flex justify-between items-center px-6">
-        <div className="flex items-center gap-4">
-          <span className="material-symbols-outlined lg:hidden">menu</span>
-          <h1
-            className="text-xl font-black tracking-widest uppercase"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            INVENTORY_CORE
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate("/seller/create-product")}
-          className="font-black uppercase tracking-tighter text-[#506600] text-sm hover:text-[#ccff00] hover:bg-[#1b1b1b] px-3 py-1 transition-colors"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-        >
-          ADD_PRODUCT
-        </button>
-      </header>
+
 
       {/* ── Main canvas ── */}
-      <main className="pt-20 px-4 max-w-2xl mx-auto lg:ml-72 lg:mx-0 lg:max-w-3xl">
+      <main className="pt-20 px-4">
 
         {/* Hero + status */}
         <section className="mb-8 mt-4">
@@ -326,7 +249,7 @@ const SellerInventory = () => {
       </main>
 
       {/* ── Mobile Bottom Nav ── */}
-      <SellerBottomNav />
+     
     </div>
   );
 };

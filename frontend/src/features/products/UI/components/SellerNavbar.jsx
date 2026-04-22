@@ -1,9 +1,9 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../auth/hooks/useAuth';
 const SellerNavbar = () => {
   const navigate = useNavigate();
-
+  const {handleLogout} = useAuth();
   return (
     <>
       {/* ── Top Nav ── */}
@@ -28,31 +28,32 @@ const SellerNavbar = () => {
         {/* Right: Desktop nav links + overflow */}
         <div className="flex items-center gap-4">
           <div className="hidden md:flex gap-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            <a
-              href="#"
+            <Link
+              to="/seller"
               className="text-black text-sm font-bold tracking-widest uppercase hover:text-[#506600] transition-colors"
             >
-              DASHBOARD
-            </a>
-            <a
-              href="#"
-              className="bg-[#ccff00] text-black text-sm font-bold tracking-widest uppercase px-2"
+             INVENTORY
+            </Link>
+            <Link
+              to="/seller/create-product"
+              className=" text-black text-sm font-bold tracking-widest hover:text-[#506600] transition-colors uppercase px-2"
             >
-              INVENTORY
-            </a>
-            <a
-              href="#"
+              ADD PRODUCT
+            </Link>
+            <Link
+              to="/"
               className="text-black text-sm font-bold tracking-widest uppercase hover:text-[#506600] transition-colors"
             >
-              SALES
-            </a>
+              CATALOG
+            </Link>
+            <Link
+              to="/auth/login"
+              onClick={handleLogout}
+              className="text-black text-sm font-bold tracking-widest uppercase hover:text-[#506600] transition-colors"
+            >
+              LOGOUT
+            </Link>
           </div>
-          <button
-            className="flex items-center justify-center w-9 h-9 hover:bg-[#f3f3f3] transition-colors"
-            aria-label="More options"
-          >
-            <span className="material-symbols-outlined text-lg">more_vert</span>
-          </button>
         </div>
       </nav>
     </>

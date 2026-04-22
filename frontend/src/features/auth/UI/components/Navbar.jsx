@@ -26,13 +26,20 @@ const Navbar = () => {
       </div>
 
       {/* Right: Sign In link only (no user data yet) */}
-      <div className="flex items-center">
+      <div className="flex gap-4 items-center">
         <Link
           to={location.pathname.endsWith("register") ? "/auth/login" : "/auth/register"}
-          className="text-[9px] font-black uppercase tracking-[0.3em] border border-[#1b1b1b]/20 px-4 py-2 hover:border-[#ccff00] hover:text-[#506600] transition-all"
+          className="text-[9px] font-black whitespace-nowrap uppercase tracking-[0.3em] border border-[#1b1b1b]/20 px-4 py-2 hover:border-[#ccff00] hover:text-[#506600] transition-all"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
           {location.pathname.endsWith("register") ? "SIGN UP" : "SIGN IN"}
+        </Link>
+        <Link
+          to={"/"}
+          className="text-[9px] font-black uppercase tracking-[0.3em] border border-[#1b1b1b]/20 px-4 py-2 hover:border-[#ccff00] hover:text-[#506600] transition-all"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          CATALOG
         </Link>
       </div>
     </nav>

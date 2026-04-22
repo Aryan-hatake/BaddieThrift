@@ -43,9 +43,6 @@ const CreateProduct = () => {
       {/* ── Grain overlay (matches global App.css) ── */}
       <div className="grain-overlay" aria-hidden="true" />
 
-      {/* ── Sticky Top Nav ── */}
-      <SellerNavbar />
-
       {/* ── Main Canvas ── */}
       <main
         className="max-w-2xl mx-auto px-6 pt-8 pb-32 relative"

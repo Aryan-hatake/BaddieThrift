@@ -21,8 +21,8 @@ const CatalogProductCard = ({ product }) => {
 
   const thumb = images?.[0];
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency;
-  const isSoldOut = status !== "active" || stock === 0;
-  
+  const isSoldOut = stock === 0;
+  const LowStock = stock < 25;
   const isNew = (() => {
     const created = new Date(product.createdAt);
     const diff = (Date.now() - created) / (1000 * 60 * 60 * 24);
@@ -67,6 +67,13 @@ const CatalogProductCard = ({ product }) => {
               className="bg-[#ccff00] text-black font-['Space_Grotesk'] text-[10px] font-black px-2 py-1 border-2 border-black uppercase"
             >
               New Arrival
+            </span>
+          )}
+          {LowStock && !isSoldOut && (
+            <span
+              className="bg-red-500  text-white font-['Space_Grotesk'] text-[10px] font-black px-2 py-1 border-2 border-black uppercase"
+            >
+              Low Stock
             </span>
           )}
         </div>

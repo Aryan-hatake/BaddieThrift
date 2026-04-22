@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
         path: "create-product",
         element: (
           <Protected>
-            <h1>Hello</h1>
+            <CreateProduct/>
           </Protected>
         )
       },

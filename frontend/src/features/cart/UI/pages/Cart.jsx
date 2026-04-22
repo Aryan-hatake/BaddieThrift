@@ -458,7 +458,7 @@ const Cart = () => {
                                     >
                                         PROMO CODE
                                     </label>
-                                    <div className="flex gap-2">
+                                    <div className="flex  flex-wrap md:flex-nowrap  gap-2">
                                         <input
                                             id="promo-code-input"
                                             type="text"
@@ -474,7 +474,7 @@ const Cart = () => {
                                         <button
                                             id="apply-promo-btn"
                                             onClick={handleApplyPromo}
-                                            className="border-2 border-black px-5 font-black text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors bg-white"
+                                            className="border-2 border-black px-5 font-black text-xs uppercase tracking-widest hover:bg-black hover:text-white py-4 transition-colors bg-white"
                                             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                         >
                                             APPLY
