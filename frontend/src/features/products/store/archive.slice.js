@@ -46,7 +46,6 @@ const archiveSlice = createSlice({
       state.error = action.payload;
     },
     setArchiveItems: (state, action) => {
-      console.log("setting",action.payload)
       state.items = action.payload;
     },
   },

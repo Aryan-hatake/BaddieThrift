@@ -14,7 +14,7 @@ const SellerManageProduct = () => {
 
 
   const handleSubmit = async (data) => {
-    console.log("working?", data)
+
     handleUpdateProduct(data,id);
     // navigate("/seller"); 
   };

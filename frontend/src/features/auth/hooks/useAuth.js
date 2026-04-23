@@ -76,7 +76,7 @@ export const useAuth = () => {
   }
   const handleLoginForGoogle = async() =>{
     const setGoogleLogin = localStorage.setItem("google_login",true)
-    console.log(setGoogleLogin)
+
   }
 
   return { handleRegister, handleLogin, handleGetMe,handleLogout,handleLoginForGoogle};

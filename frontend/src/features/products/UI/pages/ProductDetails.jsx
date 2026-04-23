@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useProduct } from "../../hooks/useProduct";
@@ -116,8 +116,8 @@ const ImageGallery = ({ images = [], title }) => {
               key={i}
               onClick={() => setActive(i)}
               className={`aspect-square overflow-hidden border-2 transition-all ${i === active
-                  ? "border-black shadow-[3px_3px_0px_#ccff00]"
-                  : "border-black/20 hover:border-black/60"
+                ? "border-black shadow-[3px_3px_0px_#ccff00]"
+                : "border-black/20 hover:border-black/60"
                 }`}
               aria-label={`View image ${i + 1}`}
             >
@@ -156,22 +156,35 @@ const Skeleton = () => (
    Main Page Component
 ───────────────────────────────────────── */
 const ProductDetails = () => {
-   
-  
 
+
+     const render = useRef(0)
+  render.current += 1;
+
+  console.log(render.current,"render")
   const { id, variantId } = useParams();
   const navigate = useNavigate();
   const { handleProductDetails } = useProduct();
   const { handleAddToCart } = useCart();
-  const { handleAddToArchieve, handleRemoveToArchieve } = useArchieve();
+  const { handleAddToArchieve, handleRemoveToArchieve, handleGetArchive } = useArchieve();
 
   const { selectedProduct: product, loading } = useSelector((s) => s.product);
+
+  const { loading: loadArchive } = useSelector((state) => state.archive);
   const { user } = useSelector((state) => state.auth);
+  
+  useEffect(() => {
+    if (user) {
+
+      handleGetArchive();
+    }
+  }, []);
   const archiveItems = useSelector((s) => s.archive.items);
+
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const [archiveFeedback, setArchiveFeedback] = useState(false);
   const [variantError, setVariantError] = useState(false);
-  
+
   console.log(archiveItems)
   useEffect(() => {
     if (id) handleProductDetails(id);
@@ -210,7 +223,7 @@ const ProductDetails = () => {
   if (!product) {
     return (
       <div className="bg-[#f9f9f9] min-h-screen">
-        
+
         <div className="flex flex-col items-center justify-center py-32 gap-6">
           <span className="material-symbols-outlined text-6xl text-[#5e5e5e]">
             inventory_2
@@ -266,15 +279,15 @@ const ProductDetails = () => {
      otherwise fall back to the product's images */
   const variantImages = selectedVariant?.images?.filter(Boolean) ?? [];
   const activeImages = variantImages.length > 0 ? variantImages : images.filter(Boolean);
-  
-  
-  
- 
-   let isAlready = archiveItems.some((i) => i.variant._id === selectedVariant?._id);
 
- 
 
-  const isSoldOut =  activeStock === 0;
+
+
+
+
+
+
+  const isSoldOut = activeStock === 0;
 
   const isNew = (() => {
     const diff = (Date.now() - new Date(createdAt)) / (1000 * 60 * 60 * 24);
@@ -283,7 +296,7 @@ const ProductDetails = () => {
 
   return (
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
-     
+
       {/* ── Breadcrumb ── */}
       <nav className="px-6 py-3 border-b border-black/10 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest font-['Space_Grotesk'] text-[#5e5e5e]">
         <button
@@ -396,13 +409,13 @@ const ProductDetails = () => {
                   </div>
 
                   {/* Compact chip grid */}
-    
+
                   <div className="flex flex-wrap gap-2">
                     {variants.map((v, i) => {
                       const isSelected = selectedVariantIdx === i;
                       const isOutOfStock = (v.stock ?? 0) === 0;
                       const attrEntries = Object.entries(v.attribute ?? {});
-                   
+
                       const displayText = attrEntries.map(([, val]) => val).join(" / ");
                       const tooltipText = attrEntries.map(([k, val]) => `${k}: ${val}`).join(", ");
 
@@ -422,12 +435,11 @@ const ProductDetails = () => {
                           }}
                           disabled={isOutOfStock}
                           className={`min-w-[52px] px-4 py-2.5 border-2 font-black text-xs uppercase tracking-widest transition-all
-                            ${
-                              isSelected
-                                ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
-                                : isOutOfStock
-                                  ? "border-black/20 bg-[#f3f3f3] text-black/35 cursor-not-allowed line-through"
-                                  : "border-black/30 bg-white hover:border-black hover:shadow-[2px_2px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                            ${isSelected
+                              ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
+                              : isOutOfStock
+                                ? "border-black/20 bg-[#f3f3f3] text-black/35 cursor-not-allowed line-through"
+                                : "border-black/30 bg-white hover:border-black hover:shadow-[2px_2px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
                             }`}
                           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                         >
@@ -474,60 +486,64 @@ const ProductDetails = () => {
             {/* CTA Buttons */}
             <div className="space-y-3 flex  flex-col gap-4 mb-10">
               <Link to={user?._id ? `/cart/${user._id}` : "/auth/login"}>
-              <button
-                id="add-to-bag-btn"
-                disabled={isSoldOut}
-                onClick={() => {
-                  /* Enforce variant selection when variants exist */
-                  if (variants.length > 0 && selectedVariantIdx === null) {
-                    setVariantError(true);
-                    setTimeout(() => setVariantError(false), 3500);
-                    /* Scroll variant section into view */
-                    document.getElementById("variant-btn-0")?.scrollIntoView({ behavior: "smooth", block: "center" });
-                    return;
-                  }
-                  if (user?._id) {
-                    handleAddToCart(id, variantId, 1);
-                  
-                  } 
-                }}
-                className="w-full bg-[#ccff00] text-black py-5 font-black text-lg tracking-tighter uppercase border-2 border-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                <button
+                  id="add-to-bag-btn"
+                  disabled={isSoldOut}
+                  onClick={() => {
+                    /* Enforce variant selection when variants exist */
+                    if (variants.length > 0 && selectedVariantIdx === null) {
+                      setVariantError(true);
+                      setTimeout(() => setVariantError(false), 3500);
+                      /* Scroll variant section into view */
+                      document.getElementById("variant-btn-0")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      return;
+                    }
+                    if (user?._id) {
+                      handleAddToCart(id, variantId, 1);
+
+                    }
+                  }}
+                  className="w-full bg-[#ccff00] text-black py-5 font-black text-lg tracking-tighter uppercase border-2 border-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
-                {isSoldOut ? "SOLD OUT" : "ADD TO BAG"}
-              </button>
-                </Link>
-  
+                  {isSoldOut ? "SOLD OUT" : "ADD TO BAG"}
+                </button>
+              </Link>
+
               <button
                 id="save-to-archive-btn"
-      
+
                 onClick={() => {
-                 
+                  const isAlready = archiveItems.some((i) => (i.variant._id ?? i.variant)  === selectedVariant?._id)
+                  console.log(archiveItems, selectedVariant?._id, "isAlready",isAlready)
+                  if (!user?._id) {
+                    navigate("/auth/login")
+                    return;
+                  }
                   if (isAlready) {
                     console.log("delete")
-
-                    handleRemoveToArchieve(id,variantId);
+                    handleRemoveToArchieve(id, variantId);
                     setArchiveFeedback(false);
-        
+                    
                   } else {
-                     handleAddToArchieve(id,variantId);
+                    handleAddToArchieve(id, variantId);
                     setArchiveFeedback(true);
-    
+
                   }
                 }}
-                className={`w-full border-2 border-black py-5 font-black text-sm tracking-tighter uppercase flex items-center justify-center gap-2 transition-all ${archiveItems.find((i)=>i.variant._id === selectedVariant?._id)   ? "bg-[#ccff00] text-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-                    : "bg-transparent hover:bg-[#f3f3f3]"
-                }`}
+                className={`w-full border-2 border-black py-5 font-black text-sm tracking-tighter uppercase flex items-center justify-center gap-2 transition-all ${archiveItems.find((i) => (i.variant._id ?? i.variant) === selectedVariant?._id) ? "bg-[#ccff00] text-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                  : "bg-transparent hover:bg-[#f3f3f3]"
+                  }`}
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                <span className="material-symbols-outlined text-base leading-none" style={{ fontVariationSettings: archiveItems.find((i)=>i.variant._id === selectedVariant?._id) ? "'FILL' 1" : "'FILL' 0" }}>
+                <span className="material-symbols-outlined text-base leading-none" style={{ fontVariationSettings: archiveItems.find((i) => (i.variant._id ?? i.variant) === selectedVariant?._id) ? "'FILL' 1" : "'FILL' 0" }}>
                   favorite
                 </span>
                 {archiveFeedback
                   ? "SAVED! VIEW ARCHIVE →"
                   : archiveItems.some((i) => i.variant._id === selectedVariant?._id)
-                  ? "IN YOUR ARCHIVE"
-                  : "SAVE TO ARCHIVE"}
+                    ? "IN YOUR ARCHIVE"
+                    : "SAVE TO ARCHIVE"}
               </button>
               <button
                 id="back-to-catalog-btn"

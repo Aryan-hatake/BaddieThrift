@@ -74,7 +74,7 @@ export function useProduct() {
    }
    
    async function handleUpdateProduct(data,id) {
-      console.log("data",data)
+  
       dispatch(setLoading(true))
       try {
          const newImageArr = data?.images?.map((image) => {

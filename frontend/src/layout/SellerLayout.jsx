@@ -8,7 +8,7 @@ const SellerLayout = () => {
         <>
             <SellerNavbar />
             <Outlet />
-            <SellerBottomNav />
+          
         </>
     )
 }

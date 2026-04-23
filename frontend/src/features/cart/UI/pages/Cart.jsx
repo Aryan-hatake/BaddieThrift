@@ -173,7 +173,7 @@ const Cart = () => {
             stock: variant?.stock ?? product?.stock ?? 0,
         };
     };
-    console.log("cart",cartItems)
+
     const resolvedItems = cartItems.map(resolveItem);
     console.log(resolvedItems)
     const subtotal = resolvedItems.reduce(

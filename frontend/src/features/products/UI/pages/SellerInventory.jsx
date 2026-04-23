@@ -29,6 +29,7 @@ const SellerInventory = () => {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
 
+
   /* Fetch on mount */
   useEffect(() => {
     (async () => {
@@ -246,9 +247,12 @@ const SellerInventory = () => {
             </p>
           </div>
         )}
+
+
+      
       </main>
 
-      {/* ── Mobile Bottom Nav ── */}
+  
      
     </div>
   );

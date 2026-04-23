@@ -15,19 +15,20 @@ function App() {
   const errProduct = useSelector((state) => state.product.error);
   const logout = useSelector((state) => state.auth.logout);
   const loading = useSelector((state) => state.auth.loading);
-  
-  console.log("LOADING: ",loading)
+
   useEffect(() => {
-    console.log("LOGOUT: ",logout)
+
     if(!logout){
       (async function () {
         await handleGetMe();
       })();
     }
     }, []);
-      useEffect(() => {
+   useEffect(() => {
+       if(user){
         handleGetArchive();
-      }, []);
+     }
+    }, [user]);
 
   useEffect(()=>{
      if(user){
