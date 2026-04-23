@@ -273,6 +273,7 @@ const ProductDetails = () => {
   const activeAmount = selectedVariant?.price?.priceAmount ?? amount ?? 0;
   const activeCurrency = selectedVariant?.price?.priceCurrency ?? currency ?? "USD";
   const activeStock = selectedVariant?.stock ?? stock ?? 0;
+  console.log(selectedVariant,"selectedVariant")
   const symbol = currencySymbol(activeCurrency);
 
   /* Images: if the selected variant has its own images use those exclusively,

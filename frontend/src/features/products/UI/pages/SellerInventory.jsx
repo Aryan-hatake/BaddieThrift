@@ -223,8 +223,7 @@ const SellerInventory = () => {
                 key={product._id}
                 product={product}
                 onAction={(id, status) => {
-                  if (status === "draft") navigate(`/seller/edit-product/${id}`);
-                  else navigate(`/seller/manage-product/${id}`); handleProductDetails(id);
+             navigate(`/seller/manage-product/${id}`); handleProductDetails(id);
                 }}
               />
             ))}

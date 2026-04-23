@@ -32,12 +32,7 @@ const EditorialTile = () => (
       <br />
       Own the Edit.
     </h2>
-    <button
-      id="editorial-read-story-btn"
-      className="self-start px-6 py-2 border-2 border-black bg-black text-white font-['Space_Grotesk'] text-xs font-black uppercase tracking-widest hover:bg-transparent hover:text-black transition-colors"
-    >
-      Read Story
-    </button>
+
   </article>
 );
 
