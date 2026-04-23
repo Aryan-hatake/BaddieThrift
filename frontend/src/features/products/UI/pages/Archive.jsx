@@ -1,10 +1,7 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  removeFromArchive,
-  clearArchive,
-} from "../../store/archive.slice";
+import {useArchieve} from "../../hooks/useArchieve";
 
 /* ─────────────────────────────────────────
    Helpers
@@ -32,10 +29,10 @@ const TABS = ["ALL_ITEMS", "AVAILABLE", "SOLD OUT", "VAULTED"];
    secondary grid style from the reference)
 ───────────────────────────────────────── */
 const ArchiveCard = ({ item, onRemove, onView }) => {
-  const isSoldOut = item.status !== "active" || (item.stock ?? 0) === 0;
-  const price = item.price?.amount ?? 0;
-  const currency = item.price?.currency ?? "USD";
-  const thumb = item.images?.[0];
+  const isSoldOut =  (item.variant?.stock ?? 0) === 0;
+  const price = item.variant.price?.priceAmount ?? 0;
+  const currency = item.variant.price?.priceCurrency ?? "USD";
+  const thumb = item.variant.images?.[0] || item.product.images?.[0];
 
   return (
     <article className="group cursor-pointer hover:bg-[#e8e8e8] transition-colors border-b-2 border-r-2 border-black p-6 flex flex-col">
@@ -47,7 +44,7 @@ const ArchiveCard = ({ item, onRemove, onView }) => {
         {thumb ? (
           <img
             src={thumb}
-            alt={item.title}
+            alt={item.product.title}
             className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-500"
           />
         ) : (
@@ -66,7 +63,7 @@ const ArchiveCard = ({ item, onRemove, onView }) => {
 
         {/* Status badge */}
         <div className="absolute top-0 left-0 bg-black text-white px-4 py-2 font-['Space_Grotesk'] text-[10px] font-black uppercase tracking-widest">
-          TIMESTAMP: {fmtDate(item.archivedAt)}
+          TIMESTAMP: {fmtDate(item.createdAt)}
         </div>
       </div>
 
@@ -75,12 +72,12 @@ const ArchiveCard = ({ item, onRemove, onView }) => {
         className="font-['Space_Grotesk'] text-[10px] flex justify-between mb-2 font-black uppercase tracking-widest"
         onClick={onView}
       >
-        <span>{item.sku ?? item._id?.slice(-8).toUpperCase()}</span>
+        <span>{item.product.sku ?? item.product._id?.slice(-8).toUpperCase()}</span>
         <span
           className={
             isSoldOut
               ? "text-[#ba1a1a]"
-              : item.status === "active"
+              : item.product.status === "active"
               ? "text-[#506600]"
               : "text-[#5e5e5e]"
           }
@@ -98,7 +95,7 @@ const ArchiveCard = ({ item, onRemove, onView }) => {
         <h3
           className="font-['Space_Grotesk'] font-bold text-lg uppercase leading-tight tracking-tighter"
         >
-          {item.title}
+          {item.product.title}
         </h3>
       </div>
 
@@ -143,14 +140,16 @@ const ArchiveCard = ({ item, onRemove, onView }) => {
 const Archive = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const items = useSelector((s) => s.archive.items);
+  const {handleRemoveToArchieve} = useArchieve();
+  const {items} = useSelector((s) => s.archive);
+
 
   const [activeTab, setActiveTab] = useState("ALL_ITEMS");
   const [confirmClear, setConfirmClear] = useState(false);
 
   /* Filter logic */
   const filtered = items.filter((item) => {
-    const isSoldOut = item.status !== "active" || (item.stock ?? 0) === 0;
+    const isSoldOut =  (item.variant.stock ?? 0) === 0;
     if (activeTab === "ALL_ITEMS") return true;
     if (activeTab === "AVAILABLE") return !isSoldOut;
     if (activeTab === "SOLD OUT") return isSoldOut;
@@ -295,13 +294,13 @@ const Archive = () => {
                   ? "lg:col-span-8 border-b-2 lg:border-b-0 lg:border-r-2"
                   : "lg:col-span-12"
               } border-black group cursor-pointer relative overflow-hidden`}
-              onClick={() => navigate(`/product/${filtered[0]._id}`)}
+              onClick={() => navigate(`/product/${filtered[0].product._id}/${filtered[0].variant._id}`)}
             >
               <div className="aspect-video w-full overflow-hidden grayscale contrast-125 hover:grayscale-0 transition-all duration-500">
-                {filtered[0].images?.[0] ? (
+                {filtered[0].product.images[0] ? (
                   <img
-                    src={filtered[0].images[0]}
-                    alt={filtered[0].title}
+                    src={filtered[0].product.images[0]}
+                    alt={filtered[0].product.title}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -318,25 +317,25 @@ const Archive = () => {
                 <div className="flex justify-between items-start">
                   <span
                     className={`px-3 py-1 font-['Space_Grotesk'] text-[10px] font-black ${
-                      filtered[0].status !== "active" || (filtered[0].stock ?? 0) === 0
+                      (filtered[0].variant?.stock ?? 0) === 0
                         ? "bg-[#ccff00] text-black"
                         : "bg-[#506600] text-white"
                     }`}
                   >
-                    {filtered[0].status !== "active" || (filtered[0].stock ?? 0) === 0
+                    {(filtered[0].variant?.stock ?? 0) === 0
                       ? "SOLD OUT"
                       : "AVAILABLE"}
                   </span>
                   <span className="font-['Space_Grotesk'] text-white text-[10px] font-black">
-                    SKU: {filtered[0].sku ?? "—"}
+                    SKU: {filtered[0].product?.sku ?? "—"}
                   </span>
                 </div>
                 <div>
                   <h3 className="text-3xl md:text-4xl font-['Space_Grotesk'] font-black text-white uppercase leading-tight tracking-tighter">
-                    {filtered[0].title}
+                    {filtered[0].product?.title}
                   </h3>
                   <p className="font-['Space_Grotesk'] text-[#ccff00] text-xs mt-2 tracking-widest font-black">
-                    ARCHIVED: {fmtDate(filtered[0].archivedAt)}
+                    ARCHIVED: {fmtDate(filtered[0].createdAt)}
                   </p>
                 </div>
               </div>
@@ -344,10 +343,10 @@ const Archive = () => {
               {/* Mobile title */}
               <div className="p-6 lg:hidden">
                 <h3 className="text-2xl font-['Space_Grotesk'] font-black uppercase">
-                  {filtered[0].title}
+                  {filtered[0].product?.title}
                 </h3>
                 <p className="text-xs font-['Space_Grotesk'] text-[#5e5e5e] mt-1">
-                  SKU: {filtered[0].sku ?? "—"}
+                  SKU: {filtered[0].product?.sku ?? "—"}
                 </p>
               </div>
             </div>
@@ -356,13 +355,13 @@ const Archive = () => {
             {filtered.length > 1 && (
               <div
                 className="md:col-span-2 lg:col-span-4 border-b-2 lg:border-b-0 border-black group cursor-pointer"
-                onClick={() => navigate(`/product/${filtered[1]._id}`)}
+                onClick={() => navigate(`/product/${filtered[1].product._id}/${filtered[1].variant._id}`)}
               >
                 <div className="aspect-square w-full grayscale contrast-150 overflow-hidden relative">
-                  {filtered[1].images?.[0] ? (
+                  {filtered[1].product.images[0] ? (
                     <img
-                      src={filtered[1].images[0]}
-                      alt={filtered[1].title}
+                      src={filtered[1].product.images[0]}
+                      alt={filtered[1].product.title}
                       className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700"
                     />
                   ) : (
@@ -373,29 +372,29 @@ const Archive = () => {
                     </div>
                   )}
                   <div className="absolute top-0 left-0 bg-black text-white px-4 py-2 font-['Space_Grotesk'] text-[10px] font-black">
-                    TIMESTAMP: {fmtDate(filtered[1].archivedAt)}
+                    TIMESTAMP: {fmtDate(filtered[1].createdAt)}
                   </div>
                 </div>
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-2">
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        filtered[1].status !== "active" || (filtered[1].stock ?? 0) === 0
+                        (filtered[1].variant?.stock ?? 0) === 0
                           ? "bg-[#ba1a1a]"
                           : "bg-[#506600]"
                       }`}
                     />
                     <span className="font-['Space_Grotesk'] text-[10px] uppercase tracking-tighter font-black">
-                      {filtered[1].status !== "active" || (filtered[1].stock ?? 0) === 0
+                      {(filtered[1].variant?.stock ?? 0) === 0
                         ? "STATUS: UNAVAILABLE"
                         : "STATUS: AVAILABLE"}
                     </span>
                   </div>
                   <h3 className="text-xl font-['Space_Grotesk'] font-bold uppercase mb-2">
-                    {filtered[1].title}
+                    {filtered[1].product?.title}
                   </h3>
                   <p className="text-[10px] font-['Space_Grotesk'] text-[#5e5e5e] font-black">
-                    SKU: {filtered[1].sku ?? "—"}
+                    SKU: {filtered[1].product?.sku ?? "—"}
                   </p>
                 </div>
               </div>
@@ -408,10 +407,10 @@ const Archive = () => {
           <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 border-b-2 border-black">
             {filtered.slice(2).map((item) => (
               <ArchiveCard
-                key={item._id}
+                key={item.product._id}
                 item={item}
-                onView={() => navigate(`/product/${item._id}`)}
-                onRemove={() => dispatch(removeFromArchive(item._id))}
+                onView={() => navigate(`/product/${item.product._id}/${item.variant._id}`)}
+                onRemove={() => handleRemoveToArchieve(item.product._id,item.variant._id)}
               />
             ))}
           </section>
@@ -425,12 +424,12 @@ const Archive = () => {
             </span>
             {filtered.slice(0, 2).map((item) => (
               <button
-                key={item._id}
-                onClick={() => dispatch(removeFromArchive(item._id))}
+                key={item.product._id}
+                onClick={() => handleRemoveToArchieve(item.product._id,item.variant._id)}
                 className="flex items-center gap-1 px-3 py-1.5 border-2 border-black/20 font-['Space_Grotesk'] text-[10px] font-black uppercase tracking-widest hover:border-[#ba1a1a] hover:text-[#ba1a1a] transition-colors"
               >
                 <span className="material-symbols-outlined text-sm leading-none">close</span>
-                {item.title?.slice(0, 20)}
+                {item.product?.title?.slice(0, 20)}
                 {item.title?.length > 20 ? "..." : ""}
               </button>
             ))}

@@ -9,5 +9,6 @@ cartRouter.get("/",authUser,cartControllers.getCart)
 cartRouter.post("/addToCart",authUser,cartControllers.addToCart)
 cartRouter.delete("/removeFromCart",authUser,cartControllers.removeFromCart)
 cartRouter.put("/updateCartItem",authUser,cartControllers.updateCartItem)
+cartRouter.get("/variant",cartControllers.variant)
 
 export default cartRouter;

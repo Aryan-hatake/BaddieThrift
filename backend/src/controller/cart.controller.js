@@ -1,6 +1,7 @@
-import { userCart, createCart } from "../dao/cart.dao.js";
+import { userCart, createCart, findVariant } from "../dao/cart.dao.js";
 import productModel from "../model/product.model.js";
 import cartModel from "../model/cart.model.js";
+
 async function getCart(req, res) {
   try {
     const cart = await userCart(req.userId);
@@ -28,13 +29,18 @@ async function addToCart(req, res) {
     const { productId, variantId, quantity = 1 } = req.body;
 
     const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
-    console.log(query)
+    
     const productExist = await productModel.findOne(query);
-    console.log(productExist)
-    if (!productExist) {
+    
+
+    const variantExist = productExist?.variants?.find(
+      (v) => v._id.toString() === variantId.toString(),
+    );
+
+    if (!variantExist) {
       return res.status(404).json({
         success: false,
-        message: "product does not exist",
+        message: "variant of product does not exist",
       });
     }
 
@@ -43,16 +49,12 @@ async function addToCart(req, res) {
 
 
     const itemAlreadyExist = cart.items.some((e, i) => {
-      if (variantId) {
+  
         return (
           productId === e.product._id.toString() &&
           variantId === e.variant._id.toString()
         );
-      } else {
-        return (
-          productId === e.product._id.toString()
-        )
-      }
+  
     });
 
     let newCart = [];
@@ -69,12 +71,13 @@ async function addToCart(req, res) {
         ) {
 
           newQty =
-            e.quantity + quantity < productExist.stock
+            e.quantity + quantity < variantExist.stock
               ? (e.quantity += quantity)
               : e.quantity;
         }
         cart.items[i].quantity = newQty;
-        return { ...e.toObject(), quantity: newQty };
+        console.log(e)
+        return { ...e, quantity: newQty };
       });
 
       await cartModel.updateOne(
@@ -190,20 +193,15 @@ async function updateCartItem(req,res) {
     const {productId,variantId,quantity} = req.body
     const cart = await userCart(req.userId);
     
-    console.log(quantity)
-    const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
+    
+    const query =  { _id: productId, "variants._id": variantId }
 
     const itemExist = cart.items.some((e, i) => {
-      if (variantId) {
         return (
           productId === e.product._id.toString() &&
           variantId === e.variant._id.toString()
         );
-      } else {
-        return (
-          productId === e.product._id.toString()
-        )
-      }
+    
     });
 
     if(!itemExist) {
@@ -214,22 +212,24 @@ async function updateCartItem(req,res) {
     }
     
     const productExist = await productModel.findOne(query);
+    const productVariant = productExist.variants?.find(
+      (v) => v._id.toString() === variantId.toString(),
+    );
     const newCart = cart.items.map((e, i) => {
       let newQty = e.quantity;
 
       if (
-        variantId ?
           productId === e.product._id.toString() &&
-          variantId === e.variant._id.toString() : productId === e.product._id.toString()
+          variantId === e.variant._id.toString() 
       ) {
 
         newQty =
-          e.quantity + quantity < productExist.stock
+          e.quantity + quantity < productVariant.stock
             ? (e.quantity += quantity)
             : e.quantity;
       }
       cart.items[i].quantity = newQty;
-      return { ...e.toObject(), quantity: newQty };
+      return { ...e, quantity: newQty };
     });
 
     await cartModel.updateOne(
@@ -250,4 +250,13 @@ async function updateCartItem(req,res) {
      console.log(error)
   }
 }
-export default { getCart, addToCart , removeFromCart , updateCartItem };
+
+async function variant(req,res) {
+  const {productId,variantId} = req.body
+
+  const variant = await findVariant(productId,variantId)
+   
+  res.send(variant)
+  
+}
+export default { getCart, addToCart , removeFromCart , updateCartItem , variant};

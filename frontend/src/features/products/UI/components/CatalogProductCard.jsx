@@ -105,7 +105,7 @@ const CatalogProductCard = ({ product }) => {
         <button
           id={`add-to-bag-${_id}`}
           onClick={() => navigate(`/product/${_id}/${variants[0]._id}`)}
-          className="w-full py-3 px-2 border-t-2 border-black bg-black text-white font-['Space_Grotesk'] font-black uppercase tracking-[0.15em] opacity-0 group-hover:opacity-100 transition-opacity text-xs shrink-0"
+          className="w-full py-3 px-2 border-t-2 border-black bg-black text-white font-['Space_Grotesk'] font-black uppercase tracking-[0.15em] group-hover:opacity-100 md:opacity-0 opacity-100 transition-opacity text-xs shrink-0"
         >
           View Product
         </button>

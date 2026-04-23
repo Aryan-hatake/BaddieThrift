@@ -3,22 +3,11 @@ import { createSlice } from "@reduxjs/toolkit";
 /* ─────────────────────────────────────────
    Helpers
 ───────────────────────────────────────── */
-const LS_KEY = "bt_archive";
 
-const loadFromLS = () => {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
 
-const saveToLS = (items) => {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(items));
-  } catch {}
-};
+
+
+
 
 /* ─────────────────────────────────────────
    Slice
@@ -26,39 +15,44 @@ const saveToLS = (items) => {
 const archiveSlice = createSlice({
   name: "archive",
   initialState: {
-    items: loadFromLS(), // array of archived product snapshots
+    items:[], // array of archived product snapshots
+    loading:false,
+    error:null,
   },
   reducers: {
     addToArchive: (state, action) => {
-      const product = action.payload; // full product object
-      const already = state.items.some((i) => i._id === product._id);
-      if (!already) {
-        state.items.unshift({
-          _id: product._id,
-          title: product.title,
-          description: product.description,
-          price: product.price,
-          images: product.images ?? [],
-          status: product.status,
-          stock: product.stock,
-          sku: product.sku,
-          archivedAt: new Date().toISOString(),
-        });
-        saveToLS(state.items);
-      }
+      const item = action.payload
+   
+  
+      
+        state.items.unshift(item);
+       
+      
+
     },
     removeFromArchive: (state, action) => {
-      state.items = state.items.filter((i) => i._id !== action.payload);
-      saveToLS(state.items);
+      const {productId , variantId} = action.payload;
+      state.items = state.items.filter((i) => i.product._id !== productId && i.variant._id !== variantId);
+    
     },
     clearArchive: (state) => {
       state.items = [];
-      saveToLS([]);
+
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setErr: (state, action) => {
+      state.error = action.payload;
+    },
+    setArchiveItems: (state, action) => {
+      console.log("setting",action.payload)
+      state.items = action.payload;
     },
   },
 });
 
-export const { addToArchive, removeFromArchive, clearArchive } =
+export const { addToArchive, removeFromArchive, clearArchive,setErr,setLoading , setArchiveItems } =
   archiveSlice.actions;
 
 export default archiveSlice.reducer;

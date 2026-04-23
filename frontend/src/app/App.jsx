@@ -4,10 +4,12 @@ import { useAuth } from "../features/auth/hooks/useAuth";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useCart } from "../features/cart/hooks/useCart";
+import { useArchieve } from "../features/products/hooks/useArchieve";
 
 function App() {
   const { handleGetMe } = useAuth();
   const {handleGetCart} = useCart()
+  const {handleGetArchive} = useArchieve();
   const user = useSelector((state) => state.auth.user);
   const errAuth = useSelector((state) => state.auth.error);
   const errProduct = useSelector((state) => state.product.error);
@@ -23,6 +25,9 @@ function App() {
       })();
     }
     }, []);
+      useEffect(() => {
+        handleGetArchive();
+      }, []);
 
   useEffect(()=>{
      if(user){

@@ -10,6 +10,7 @@ import productRouter from './routes/product.route.js';
 import cartRouter from './routes/cart.route.js';
 import path from 'path';
 import { fileURLToPath } from "url";
+import archivedRouter from "./routes/archieve.route.js";
 
 const app = express()
 
@@ -43,7 +44,7 @@ app.get("/health",(req,res)=>{
 app.use("/api/auth",authRouter)
 app.use("/api/product",productRouter)
 app.use("/api/cart",cartRouter)
-
+app.use("/api/archive",archivedRouter);
 
 app.get("*name", (req, res) => {
   res.sendFile(path.join(__dirname,"..","./public/index.html"));

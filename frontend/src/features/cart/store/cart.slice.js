@@ -33,10 +33,10 @@ const cartSlice = createSlice({
             const item = state.cartItems.find((i) => {
                 const pId = i.product?._id ?? i.product;
                 const vId = i.variant?._id ?? i.variant;
-                if (variantId) return pId === productId && vId === variantId;
-                return pId === productId;
+                return  pId === productId && vId === variantId;
             });
-            if (item) item.quantity+=quantity;
+           
+            if (item && item.quantity < item.variant.stock) item.quantity+=quantity;
         },
     },
 });
