@@ -88,7 +88,7 @@ const CreateProduct = () => {
       </main>
 
       {/* ── Mobile Bottom Nav ── */}
-      <SellerBottomNav />
+  
     </>
   );
 };
