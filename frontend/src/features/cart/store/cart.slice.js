@@ -14,6 +14,9 @@ const cartSlice = createSlice({
         setLoading: (state, action) => {
             state.loading = action.payload;
         },
+        setAddCart: (state, action) => {
+            state.cartItems.push(action.payload);
+        },
         setError: (state, action) => {
             state.error = action.payload;
         },
@@ -47,6 +50,7 @@ export const {
     setLoading,
     removeItemFromCart,
     updateItemQuantity,
+    setAddCart,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

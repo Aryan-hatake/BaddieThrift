@@ -28,14 +28,15 @@ async function addToCart(req, res) {
   try {
     const { productId, variantId, quantity = 1 } = req.body;
 
-    const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
+    const query = { _id: productId, "variants._id": variantId } 
     
     const productExist = await productModel.findOne(query);
     
+    const variantExist = productExist.variants.find(
+      (v) => v._id.toString() === variantId.toString()
+    )
 
-    const variantExist = productExist?.variants?.find(
-      (v) => v._id.toString() === variantId.toString(),
-    );
+   
 
     if (!variantExist) {
       return res.status(404).json({
@@ -65,9 +66,8 @@ async function addToCart(req, res) {
         let newQty = e.quantity;
 
         if (
-          variantId ?
             productId === e.product._id.toString() &&
-            variantId === e.variant._id.toString() : productId === e.product._id.toString()
+            variantId === e.variant._id.toString() 
         ) {
 
           newQty =
@@ -76,7 +76,7 @@ async function addToCart(req, res) {
               : e.quantity;
         }
         cart.items[i].quantity = newQty;
-        console.log(e)
+     
         return { ...e, quantity: newQty };
       });
 
@@ -110,11 +110,20 @@ async function addToCart(req, res) {
       );
     } 
 
+    const updatedCart = await userCart(req.userId);
+
+    const addedItem = updatedCart.items?.find((e) => {
+      return (
+        productId === e.product._id.toString() &&
+        variantId === e.variant._id.toString()
+      );
+    });
+
 
     return res.status(200).json({
       success: true,
       message: "item added to cart successfully",
-      cart:newCart,
+      cart:addedItem,
     });
   } catch (error) {
     console.log(error);

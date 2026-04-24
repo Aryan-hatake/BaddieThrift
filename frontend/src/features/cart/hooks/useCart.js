@@ -4,6 +4,7 @@ import {
     setLoading,
     removeItemFromCart,
     updateItemQuantity,
+    setAddCart,
 } from "../store/cart.slice";
 import { useDispatch } from "react-redux";
 import {
@@ -31,10 +32,8 @@ export const useCart = () => {
     const handleAddToCart = async (productId, variantId, quantity) => {
         try {
             dispatch(setLoading(true));
-          
-            
             const data = await addToCart(productId, variantId, quantity);
-            dispatch(setCartItems(data.cart.items ?? data.cart));
+            dispatch(setAddCart(data.cart));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
         } finally {
