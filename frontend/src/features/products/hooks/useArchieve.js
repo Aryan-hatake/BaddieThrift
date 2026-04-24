@@ -10,7 +10,6 @@ export function useArchieve(){
         try{
             dispatch(setLoading(true));
             const response = await addToArchiveApi(productId,variantId)
-            console.log(response.archivedProduct,"archieve")
             dispatch(addToArchive(response.archivedProduct))
         }
         catch(error){

@@ -161,7 +161,7 @@ const ProductDetails = () => {
      const render = useRef(0)
   render.current += 1;
 
-  console.log(render.current,"render")
+
   const { id, variantId } = useParams();
   const navigate = useNavigate();
   const { handleProductDetails } = useProduct();
@@ -185,7 +185,7 @@ const ProductDetails = () => {
   const [archiveFeedback, setArchiveFeedback] = useState(false);
   const [variantError, setVariantError] = useState(false);
 
-  console.log(archiveItems)
+
   useEffect(() => {
     if (id) handleProductDetails(id);
   }, [id]);
@@ -273,7 +273,7 @@ const ProductDetails = () => {
   const activeAmount = selectedVariant?.price?.priceAmount ?? amount ?? 0;
   const activeCurrency = selectedVariant?.price?.priceCurrency ?? currency ?? "USD";
   const activeStock = selectedVariant?.stock ?? stock ?? 0;
-  console.log(selectedVariant,"selectedVariant")
+
   const symbol = currencySymbol(activeCurrency);
 
   /* Images: if the selected variant has its own images use those exclusively,
@@ -384,81 +384,116 @@ const ProductDetails = () => {
               {description}
             </p>
 
-            {/* ── Variants ── */}
+            {/* ── Variants — grouped by attribute key ── */}
             {variants.length > 0 && (() => {
-              /* Detect the primary attribute key for the label (e.g. "size", "color") */
-              const primaryKey = Object.keys(variants[0]?.attribute ?? {})[0] ?? "variant";
+              /* Collect every unique attribute key that appears across ALL variants */
+              const allAttrKeys = [
+                ...new Set(
+                  variants.flatMap((v) => Object.keys(v.attribute ?? {}))
+                ),
+              ];
+
+              /* For each key, collect the unique values (preserving insertion order) */
+              const valuesByKey = Object.fromEntries(
+                allAttrKeys.map((key) => [
+                  key,
+                  [...new Set(variants.map((v) => v.attribute?.[key]).filter(Boolean))],
+                ])
+              );
+
+              /* Currently selected variant's attribute map */
+              const selectedAttr = selectedVariant?.attribute ?? {};
+
               return (
-                <div className="mb-6">
-                  {/* Label row */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className="text-[11px] font-black uppercase tracking-widest text-[#5e5e5e]"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      SELECT {primaryKey.toUpperCase()}
-                    </span>
-                    {selectedVariant && (
-                      <button
-                        onClick={() => navigate(`/product/${id}`, { replace: true })}
-                        className="text-[9px] font-black uppercase tracking-widest text-[#ba1a1a] hover:underline"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        Clear ×
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Compact chip grid */}
-
-                  <div className="flex flex-wrap gap-2">
-                    {variants.map((v, i) => {
-                      const isSelected = selectedVariantIdx === i;
-                      const isOutOfStock = (v.stock ?? 0) === 0;
-                      const attrEntries = Object.entries(v.attribute ?? {});
-
-                      const displayText = attrEntries.map(([, val]) => val).join(" / ");
-                      const tooltipText = attrEntries.map(([k, val]) => `${k}: ${val}`).join(", ");
-
-                      return (
-                        <button
-                          key={v._id ?? i}
-                          id={`variant-btn-${i}`}
-                          title={isOutOfStock ? `${tooltipText} — Out of stock` : tooltipText}
-                          onClick={() => {
-                            setVariantError(false);
-                            setSelectedVariantIdx(i);
-                            if (isSelected) {
-                              navigate(`/product/${id}`, { replace: true });
-                            } else {
-                              navigate(`/product/${id}/${v._id}`, { replace: true });
-                            }
-                          }}
-                          disabled={isOutOfStock}
-                          className={`min-w-[52px] px-4 py-2.5 border-2 font-black text-xs uppercase tracking-widest transition-all
-                            ${isSelected
-                              ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
-                              : isOutOfStock
-                                ? "border-black/20 bg-[#f3f3f3] text-black/35 cursor-not-allowed line-through"
-                                : "border-black/30 bg-white hover:border-black hover:shadow-[2px_2px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
-                            }`}
+                <div className="mb-6 flex flex-col gap-6">
+                  {allAttrKeys.map((attrKey) => (
+                    <div key={attrKey}>
+                      {/* Label row per attribute */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span
+                          className="text-[11px] font-black uppercase tracking-widest text-[#5e5e5e]"
                           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                         >
-                          {displayText}
-                        </button>
-                      );
-                    })}
-                  </div>
+                          SELECT {attrKey.toUpperCase()}
+                          {selectedAttr[attrKey] && (
+                            <span className="ml-2 text-[#1b1b1b]">
+                              — {String(selectedAttr[attrKey]).toUpperCase()}
+                            </span>
+                          )}
+                        </span>
+                        {/* Show "Clear" only on the first key to avoid duplicate buttons */}
+                        {allAttrKeys[0] === attrKey && selectedVariant && (
+                          <button
+                            onClick={() =>
+                              navigate(`/product/${id}/${variants[0]._id}`, { replace: true })
+                            }
+                            className="text-[9px] font-black uppercase tracking-widest text-[#ba1a1a] hover:underline"
+                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                          >
+                            Clear ×
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Chips for this attribute key */}
+                      <div className="flex flex-wrap gap-2">
+                        {valuesByKey[attrKey].map((attrValue) => {
+                          /* Find the first variant that has this key=value */
+                          const matchIdx = variants.findIndex(
+                            (v) => v.attribute?.[attrKey] === attrValue
+                          );
+                          const matchVariant = variants[matchIdx];
+                          const isSelected =
+                            selectedAttr[attrKey] === attrValue;
+                          const isOutOfStock = (matchVariant?.stock ?? 0) === 0;
+
+                          return (
+                            <button
+                              key={attrValue}
+                              id={`variant-btn-${attrKey}-${attrValue}`}
+                              title={
+                                isOutOfStock
+                                  ? `${attrKey}: ${attrValue} — Out of stock`
+                                  : `${attrKey}: ${attrValue}`
+                              }
+                              disabled={isOutOfStock}
+                              onClick={() => {
+                                setVariantError(false);
+                                setSelectedVariantIdx(matchIdx);
+                                navigate(
+                                  `/product/${id}/${matchVariant._id}`,
+                                  { replace: true }
+                                );
+                              }}
+                              className={`min-w-[52px] px-4 py-2.5 border-2 font-black text-xs uppercase tracking-widest transition-all
+                                ${
+                                  isSelected
+                                    ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
+                                    : isOutOfStock
+                                    ? "border-black/20 bg-[#f3f3f3] text-black/35 cursor-not-allowed line-through"
+                                    : "border-black/30 bg-white hover:border-black hover:shadow-[2px_2px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                                }`}
+                              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                            >
+                              {attrValue}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
 
                   {/* Inline error when variant not selected */}
                   {variantError && (
-                    <div className="mt-2.5 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm leading-none text-[#ba1a1a]">error</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm leading-none text-[#ba1a1a]">
+                        error
+                      </span>
                       <span
                         className="text-[10px] font-black uppercase tracking-widest text-[#ba1a1a]"
                         style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                       >
-                        Please select a {primaryKey} to continue
+                        Please select a variant to continue
                       </span>
                     </div>
                   )}
@@ -516,13 +551,12 @@ const ProductDetails = () => {
 
                 onClick={() => {
                   const isAlready = archiveItems.some((i) => (i.variant._id ?? i.variant)  === selectedVariant?._id)
-                  console.log(archiveItems, selectedVariant?._id, "isAlready",isAlready)
+  
                   if (!user?._id) {
                     navigate("/auth/login")
                     return;
                   }
                   if (isAlready) {
-                    console.log("delete")
                     handleRemoveToArchieve(id, variantId);
                     setArchiveFeedback(false);
                     

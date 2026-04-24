@@ -121,17 +121,19 @@ const Cart = () => {
     const { handleGetAllProducts } = useProduct();
 
     const { cartItems, loading, error } = useSelector((state) => state.cart);
+    console.log("cartItems",cartItems)
     const user = useSelector((state) => state.auth?.user);
     const catalogProducts = useSelector((state) => state.product?.catalogProducts ?? []);
 
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
     const [promoError, setPromoError] = useState("");
+    const [fetchCartAgain,setFetchCartAgain] = useState(0);
 
     useEffect(() => {
         handleGetCart();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [fetchCartAgain]);
 
     // Fetch catalog if not already loaded
     useEffect(() => {
@@ -141,80 +143,43 @@ const Cart = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [catalogProducts.length]);
 
-    /* ── Price helpers ── */
-    const resolveItem = (item) => {
-        console.log("item",item)
-        const product = item.product ?? {};
+    /* ── Totals — computed directly from cartItems ── */
+    const subtotal = cartItems.reduce((acc, item) => {
         const variant = item.variant ?? null;
-        
-        // Prefer variant price if available
-        const rawAmount =
+        const product = item.product ?? {};
+        const price = Number(
             variant?.price?.priceAmount ??
             variant?.price?.amount ??
             product?.price?.amount ??
-            0;
-        const rawCurrency =
-            variant?.price?.priceCurrency ??
-            variant?.price?.currency ??
-            product?.price?.currency ??
-            "USD";
-
-        // Images: variant images > product images
-        const variantImages = (variant?.images ?? []).filter(Boolean);
-        const productImages = (product?.images ?? []).filter(Boolean);
-        const images = variantImages.length > 0 ? variantImages : productImages;
-
-        // Variant attributes label  e.g. "COLOR: BLACK / SIZE: L"
-        const attrLabel = variant?.attribute
-            ? Object.entries(variant.attribute)
-                  .map(([k, v]) => `${k.toUpperCase()}: ${v}`)
-                  .join(" / ")
-            : null;
-
-        return {
-            title: product?.title ?? "Unknown Product",
-            price: Number(rawAmount),
-            currency: rawCurrency,
-            images,
-            attrLabel,
-            productId: product?._id ?? item.product,
-            variantId: variant?._id ?? item.variant ?? null,
-            quantity: item.quantity ?? 1,
-            status: product?.status ?? "active",
-            stock: variant?.stock ?? product?.stock ?? 0,
-        };
-    };
-
-    const resolvedItems = cartItems.map(resolveItem);
-
-    const subtotal = resolvedItems.reduce(
-        (acc, i) => acc + i.price * i.quantity,
-        0
-    );
+            0
+        );
+        return acc + price * (item.quantity ?? 1);
+    }, 0);
     const shipping = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
     const taxes = subtotal * TAX_RATE;
-    const discount = promoApplied ? subtotal * 0.1 : 0; // 10% mock promo
+    const discount = promoApplied ? subtotal * 0.1 : 0;
     const total = subtotal + shipping + taxes - discount;
 
     /* ── "You Might Also Like" — RegEx filter across catalog ── */
     const suggestedProducts = useMemo(() => {
         // IDs already in cart — exclude them
         const cartProductIds = new Set(
-            resolvedItems.map((i) => String(i.productId))
+            cartItems.map((i) => String(i.product?._id ?? i.product))
         );
 
-        // Build keyword list from cart item titles + descriptions
-        const keywords = resolvedItems
+        // Build keyword list directly from cart item product titles + descriptions
+        const keywords = cartItems
             .flatMap((item) => {
                 const words = [];
-                if (item.title) words.push(...item.title.split(/\s+/));
-                if (item.description) words.push(...item.description.split(/\s+/));
+                const t = item.product?.title ?? "";
+                const d = item.product?.description ?? "";
+                if (t) words.push(...t.split(/\s+/));
+                if (d) words.push(...d.split(/\s+/));
                 return words;
             })
             .map((w) => w.replace(/[^a-zA-Z0-9]/g, "").trim())
-            .filter((w) => w.length > 2); // ignore tiny stop-words
+            .filter((w) => w.length > 2);
 
-        // Deduplicate and build RegEx (OR of all keywords)
         const uniqueKeywords = [...new Set(keywords)];
         const pattern =
             uniqueKeywords.length > 0
@@ -222,14 +187,12 @@ const Cart = () => {
                 : null;
 
         const candidates = catalogProducts.filter((p) => {
-            if (cartProductIds.has(String(p._id))) return false; // already in cart
-            if (!pattern) return true; // no keywords → include all
+            if (cartProductIds.has(String(p._id))) return false;
+            if (!pattern) return true;
             return pattern.test(p.title ?? "") || pattern.test(p.description ?? "");
         });
 
-        // Shuffle and take up to 4
         const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-        // If no regex matches, fall back to a random slice of the full catalog
         if (shuffled.length === 0) {
             return [...catalogProducts]
                 .filter((p) => !cartProductIds.has(String(p._id)))
@@ -268,7 +231,7 @@ const Cart = () => {
                             className="bg-black text-[#ccff00] px-3 py-1 font-black text-xs uppercase tracking-widest"
                             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                         >
-                            {resolvedItems.length} ITEM{resolvedItems.length !== 1 ? "S" : ""}
+                            {cartItems.length} ITEM{cartItems.length !== 1 ? "S" : ""}
                         </span>
                         {user && (
                             <span
@@ -301,16 +264,52 @@ const Cart = () => {
                                 <SkeletonRow />
                                 <SkeletonRow />
                             </>
-                        ) : resolvedItems.length === 0 ? (
+                        ) : cartItems.length === 0 ? (
                             <EmptyBag onShop={() => navigate("/")} />
                         ) : (
-                            resolvedItems.map((item, idx) => (
+                            cartItems.map((item, idx) => {
+                                const product   = item.product ?? {};
+                                const variant   = item.variant ?? null;
+                                const productId = product._id ?? item.product;
+                                const variantId = variant?._id ?? item.variant ?? null;
+                                const quantity  = item.quantity ?? 1;
+
+                                // Price
+                                const price = Number(
+                                    variant?.price?.priceAmount ??
+                                    variant?.price?.amount ??
+                                    product?.price?.amount ??
+                                    0
+                                );
+                                const currency =
+                                    variant?.price?.priceCurrency ??
+                                    variant?.price?.currency ??
+                                    product?.price?.currency ??
+                                    "USD";
+
+                                // Images: variant > product
+                                const images = [
+                                    ...(variant?.images ?? []),
+                                    ...(product?.images ?? []),
+                                ].filter(Boolean);
+
+                                // Attribute chips label e.g. "COLOR: BLACK / SIZE: L"
+                                const attrLabel = variant?.attribute
+                                    ? Object.entries(variant.attribute)
+                                          .map(([k, v]) => `${k.toUpperCase()}: ${v}`)
+                                          .join(" / ")
+                                    : null;
+
+                                const stock = variant?.stock ?? product?.stock ?? 0;
+                                 console.log(product)
+                                 if(!product) setFetchCartAgain(prev => prev + 1);
+                                return (
                                 <div
-                                    key={`${item.productId}-${item.variantId}-${idx}`}
+                                    key={`${productId}-${variantId}-${idx}`}
                                     className="flex flex-col md:flex-row gap-8 pb-10 border-b-2 border-[#e2e2e2]"
                                 >
                                     {/* Image */}
-                                    <ItemImage images={item.images} title={item.title} />
+                                    <ItemImage images={images} title={product.title} />
 
                                     {/* Details */}
                                     <div className="flex-grow flex flex-col justify-between gap-6">
@@ -320,43 +319,43 @@ const Cart = () => {
                                                     className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-tight"
                                                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                                 >
-                                                    {item.title}
+                                                    {product.title ?? "Unknown Product"}
                                                 </h3>
                                                 <span
                                                     className="text-2xl md:text-3xl font-black shrink-0"
                                                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                                 >
-                                                    {sym(item.currency)}
-                                                    {(item.price * item.quantity).toFixed(2)}
+                                                    {sym(currency)}
+                                                    {(price * quantity).toFixed(2)}
                                                 </span>
                                             </div>
 
-                                            {item.attrLabel && (
+                                            {attrLabel && (
                                                 <p
                                                     className="text-xs text-[#5e5e5e] uppercase tracking-widest font-black mb-1"
                                                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                                 >
-                                                    {item.attrLabel}
+                                                    {attrLabel}
                                                 </p>
                                             )}
 
                                             {/* Unit price when qty > 1 */}
-                                            {item.quantity > 1 && (
+                                            {quantity > 1 && (
                                                 <p
                                                     className="text-[10px] text-[#5e5e5e] uppercase tracking-widest font-bold"
                                                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                                 >
-                                                    {sym(item.currency)}{item.price.toFixed(2)} EACH
+                                                    {sym(currency)}{price.toFixed(2)} EACH
                                                 </p>
                                             )}
 
                                             {/* Stock warning */}
-                                            {item.stock > 0 && item.stock <= 3 && (
+                                            {stock > 0 && stock <= 3 && (
                                                 <p
                                                     className="mt-2 text-[10px] font-black uppercase tracking-widest text-[#f0a500]"
                                                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                                 >
-                                                    ⚠ ONLY {item.stock} LEFT IN STOCK
+                                                    ⚠ ONLY {stock} LEFT IN STOCK
                                                 </p>
                                             )}
                                         </div>
@@ -364,36 +363,20 @@ const Cart = () => {
                                         {/* Bottom — stepper + remove */}
                                         <div className="flex flex-col xs:flex-row justify-between items-start xs:items-end gap-4">
                                             <QuantityStepper
-                                                quantity={item.quantity}
+                                                quantity={quantity}
                                                 onDecrease={() =>
-                                                    item.quantity > 1
-                                                        ? handleUpdateQuantity(
-                                                              item.productId,
-                                                              item.variantId,
-                                                              -1
-                                                          )
-                                                        : handleRemoveFromCart(
-                                                              item.productId,
-                                                              item.variantId
-                                                          )
+                                                    quantity > 1
+                                                        ? handleUpdateQuantity(productId, variantId, -1)
+                                                        : handleRemoveFromCart(productId, variantId)
                                                 }
                                                 onIncrease={() =>
-                                                    handleUpdateQuantity(
-                                                        item.productId,
-                                                        item.variantId,
-                                                         1
-                                                    )
+                                                    handleUpdateQuantity(productId, variantId, 1)
                                                 }
                                             />
 
                                             <button
                                                 id={`remove-item-${idx}`}
-                                                onClick={() =>
-                                                    handleRemoveFromCart(
-                                                        item.productId,
-                                                        item.variantId
-                                                    )
-                                                }
+                                                onClick={() => handleRemoveFromCart(productId, variantId)}
                                                 className="flex items-center gap-1.5 text-[#5e5e5e] hover:text-[#ba1a1a] transition-colors font-black text-[10px] uppercase tracking-widest"
                                                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                             >
@@ -405,11 +388,12 @@ const Cart = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                                );
+                            })
                         )}
 
                         {/* Continue shopping link */}
-                        {resolvedItems.length > 0 && !loading && (
+                        {cartItems.length > 0 && !loading && (
                             <button
                                 onClick={() => navigate("/")}
                                 className="self-start flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#5e5e5e] hover:text-[#506600] transition-colors border-b-2 border-transparent hover:border-[#506600] pb-0.5"
@@ -424,7 +408,7 @@ const Cart = () => {
                     </div>
 
                     {/* ── Order Summary Sidebar ── */}
-                    {resolvedItems.length > 0 && (
+                    {cartItems.length > 0 && (
                         <aside className="w-full lg:w-[400px] flex flex-col gap-6">
                             {/* Summary card */}
                             <div className="border-2 border-black bg-white p-8 sticky top-24">
@@ -585,7 +569,7 @@ const Cart = () => {
                 </div>
 
                 {/* ── You Might Also Like ── */}
-                {resolvedItems.length > 0 && suggestedProducts.length > 0 && (
+                {cartItems.length > 0 && suggestedProducts.length > 0 && (
                     <section className="mt-24">
                         <h2
                             className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-10"
