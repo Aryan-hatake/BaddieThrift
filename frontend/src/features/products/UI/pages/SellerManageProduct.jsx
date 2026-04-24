@@ -94,7 +94,7 @@ const SellerManageProduct = () => {
       </main>
 
       {/* ── Mobile Bottom Nav ── */}
-      <SellerBottomNav />
+
     </>
   );
 }
