@@ -40,6 +40,7 @@ export async function getAllArchivedProducts(req,res){
             plainProduct.variant = variant;
             return plainProduct;
         }))
+        console.log(newArchieve)
         res.status(200).json({message:"Archived products fetched successfully",items:newArchieve});
     }
     catch(error){

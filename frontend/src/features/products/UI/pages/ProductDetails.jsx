@@ -158,7 +158,7 @@ const Skeleton = () => (
 const ProductDetails = () => {
 
 
-     const render = useRef(0)
+  const render = useRef(0)
   render.current += 1;
 
 
@@ -168,16 +168,16 @@ const ProductDetails = () => {
   const { handleAddToCart } = useCart();
   const { handleAddToArchieve, handleRemoveToArchieve, handleGetArchive } = useArchieve();
 
-  
-  const { loading: loadArchive } = useSelector((state) => state.archive);
-  const { user } = useSelector((state) => state.auth);
-  
-  useEffect(() => {
-    if (user) {
 
+
+  const { user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    console.log("calling archieve api.....")
+    if (user) {
       handleGetArchive();
     }
-  }, []);
+  }, [user]);
   const archiveItems = useSelector((s) => s.archive.items);
 
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
@@ -186,14 +186,16 @@ const ProductDetails = () => {
 
 
   useEffect(() => {
-    if (id){
- 
+    if (id) {
+
       handleProductDetails(id);
-    } 
+    }
   }, [id]);
-  
+
   const { selectedProduct: product, loading } = useSelector((s) => s.product);
-  const {selectedProduct} = useSelector((s) => s.product);
+
+  const { selectedProduct } = useSelector((s) => s.product);
+
 
   /* Sync selected variant from URL; auto pre-select first available when no variantId */
   useEffect(() => {
@@ -203,21 +205,21 @@ const ProductDetails = () => {
       return;
     }
     if (variantId) {
-      const idx = product.variants.findIndex((v) => v._id === variantId);
+      const idx = product?.variants?.findIndex((v) => v._id === variantId);
       setSelectedVariantIdx(idx !== -1 ? idx : 0);
     } else {
       /* Auto-select: prefer first in-stock variant, fall back to index 0 */
-      const firstAvailable = product.variants.findIndex((v) => (v.stock ?? 0) > 0);
+      const firstAvailable = product?.variants?.findIndex((v) => (v.stock ?? 0) > 0);
       const defaultIdx = firstAvailable !== -1 ? firstAvailable : 0;
       setSelectedVariantIdx(defaultIdx);
-      const defaultVariant = product.variants[defaultIdx];
+      const defaultVariant = product?.variants?.[defaultIdx];
       if (defaultVariant?._id) {
         navigate(`/product/${id}/${defaultVariant._id}`, { replace: true });
       }
     }
   }, [product?._id, variantId]);
 
-  
+
   if (loading) {
     return (
       <div className="bg-[#f9f9f9] min-h-screen">
@@ -269,8 +271,8 @@ const ProductDetails = () => {
 
 
   const selectedVariant = selectedVariantIdx !== null ? variants[selectedVariantIdx]
-   : null;
-   
+    : null;
+
 
 
 
@@ -288,19 +290,19 @@ const ProductDetails = () => {
   const activeAmount = selectedVariant?.price?.priceAmount ?? amount ?? 0;
   const activeCurrency = selectedVariant?.price?.priceCurrency ?? currency ?? "USD";
   const activeStock = selectedVariant?.stock ?? stock ?? 0;
-  
+
   const symbol = currencySymbol(activeCurrency);
-  
+
   /* Images: if the selected variant has its own images use those exclusively,
   otherwise fall back to the product's images */
   const variantImages = selectedVariant?.images?.filter(Boolean) ?? [];
   const activeImages = variantImages.length > 0 ? variantImages : images.filter(Boolean);
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
 
 
   const isSoldOut = activeStock === 0;
@@ -309,6 +311,13 @@ const ProductDetails = () => {
     const diff = (Date.now() - new Date(createdAt)) / (1000 * 60 * 60 * 24);
     return diff < 14;
   })();
+
+  /* Compute once — is the currently selected variant already archived? */
+  const isArchived =
+    selectedVariant != null &&
+    archiveItems.some(
+      (i) => (i.variant?._id ?? i.variant) === selectedVariant._id
+    );
   return (
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
 
@@ -416,7 +425,7 @@ const ProductDetails = () => {
               );
 
               /* Currently selected variant's attribute map */
-              
+
               const selectedAttr = selectedVariant?.attribute ?? {};
 
               return (
@@ -481,10 +490,9 @@ const ProductDetails = () => {
                                 );
                               }}
                               className={`min-w-[52px] px-4 py-2.5 border-2 font-black text-xs uppercase tracking-widest transition-all
-                                ${
-                                  isSelected
-                                    ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
-                                    : isOutOfStock
+                                ${isSelected
+                                  ? "border-black bg-black text-white shadow-[3px_3px_0px_#ccff00]"
+                                  : isOutOfStock
                                     ? "border-black/20 bg-[#f3f3f3] text-black/35 cursor-not-allowed line-through"
                                     : "border-black/30 bg-white hover:border-black hover:shadow-[2px_2px_0px_#1b1b1b] hover:translate-x-[-1px] hover:translate-y-[-1px]"
                                 }`}
@@ -563,37 +571,39 @@ const ProductDetails = () => {
 
               <button
                 id="save-to-archive-btn"
-
                 onClick={() => {
-                  const isAlready = archiveItems.some((i) => (i.variant._id ?? i.variant)  === selectedVariant?._id)
-                 
                   if (!user?._id) {
-                    navigate("/auth/login")
+                    navigate("/auth/login");
                     return;
                   }
-                  if (isAlready) {
+                  if (isArchived) {
                     handleRemoveToArchieve(id, variantId);
                     setArchiveFeedback(false);
-                    
                   } else {
                     handleAddToArchieve(id, variantId);
                     setArchiveFeedback(true);
-
                   }
                 }}
-                className={`w-full border-2 border-black py-5 font-black text-sm tracking-tighter uppercase flex items-center justify-center gap-2 transition-all ${archiveItems.find((i) => (i.variant._id ?? i.variant) === selectedVariant?._id) ? "bg-[#ccff00] text-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-                  : "bg-transparent hover:bg-[#f3f3f3]"
-                  }`}
+                className={`w-full border-2 border-black py-5 font-black text-sm tracking-tighter uppercase flex items-center justify-center gap-2 transition-all ${
+                  isArchived
+                    ? "bg-[#ccff00] text-black shadow-[4px_4px_0px_0px_#1b1b1b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                    : "bg-transparent hover:bg-[#f3f3f3]"
+                }`}
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                <span className="material-symbols-outlined text-base leading-none" style={{ fontVariationSettings: archiveItems.find((i) => (i.variant._id ?? i.variant) === selectedVariant?._id) ? "'FILL' 1" : "'FILL' 0" }}>
+                <span
+                  className="material-symbols-outlined text-base leading-none"
+                  style={{ fontVariationSettings: isArchived ? "'FILL' 1" : "'FILL' 0" }}
+                >
                   favorite
                 </span>
                 {archiveFeedback
                   ? "SAVED! VIEW ARCHIVE →"
-                  : archiveItems.some((i) => i.variant._id === selectedVariant?._id)
-                    ? "IN YOUR ARCHIVE"
-                    : "SAVE TO ARCHIVE"}
+                  : selectedVariant
+                    ? isArchived
+                      ? "IN YOUR ARCHIVE"
+                      : "SAVE TO ARCHIVE"
+                    : "PLEASE SELECT A VARIANT FIRST"}
               </button>
               <button
                 id="back-to-catalog-btn"

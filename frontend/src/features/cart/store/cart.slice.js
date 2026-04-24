@@ -22,7 +22,7 @@ const cartSlice = createSlice({
                     return item
                }
             })
-            console.log(existingItem)
+
           if(!existingItem){
 
               state.cartItems.push(action.payload);
@@ -50,7 +50,7 @@ const cartSlice = createSlice({
                 return  pId === productId && vId === variantId;
             });
             if (item && item.quantity <= item.variant.stock){
-                console.log(item.quantity,quantity)
+        
                 if(item.quantity+quantity <= item.variant.stock || quantity<0){
                     item.quantity+=quantity;
                 }

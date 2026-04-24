@@ -33,7 +33,7 @@ export const useCart = () => {
         try {
             dispatch(setLoading(true));
             const data = await addToCart(productId, variantId, quantity);
-            console.log("running")
+    
             dispatch(setAddCart(data.cart));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
@@ -47,7 +47,7 @@ export const useCart = () => {
         dispatch(removeItemFromCart({ productId, variantId }));
         try {
             const data = await removeFromCart(productId, variantId);
-            console.log(data)
+
             // Sync with server response if provided
             dispatch(removeItemFromCart({productId,variantId}));
         } catch (err) {
@@ -62,7 +62,7 @@ export const useCart = () => {
         // Optimistic update
         dispatch(updateItemQuantity({ productId, variantId, quantity }));
         try {
-            console.log("running update")
+
             const data = await updateCartItem(productId, variantId, quantity);
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
