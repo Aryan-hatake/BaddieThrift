@@ -15,7 +15,18 @@ const cartSlice = createSlice({
             state.loading = action.payload;
         },
         setAddCart: (state, action) => {
-            state.cartItems.push(action.payload);
+
+            const existingItem = state.cartItems.find((item)=>{
+               if(item.product._id === action.payload.product._id && item.variant._id === action.payload.variant._id){
+                    item.quantity += action.payload.quantity;
+                    return item
+               }
+            })
+            console.log(existingItem)
+          if(!existingItem){
+
+              state.cartItems.push(action.payload);
+          }
         },
         setError: (state, action) => {
             state.error = action.payload;
@@ -38,8 +49,13 @@ const cartSlice = createSlice({
                 const vId = i.variant?._id ?? i.variant;
                 return  pId === productId && vId === variantId;
             });
-           
-            if (item && item.quantity < item.variant.stock) item.quantity+=quantity;
+            if (item && item.quantity <= item.variant.stock){
+                console.log(item.quantity,quantity)
+                if(item.quantity+quantity <= item.variant.stock || quantity<0){
+                    item.quantity+=quantity;
+                }
+            } 
+                
         },
     },
 });

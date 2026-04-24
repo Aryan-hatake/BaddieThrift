@@ -33,6 +33,7 @@ export const useCart = () => {
         try {
             dispatch(setLoading(true));
             const data = await addToCart(productId, variantId, quantity);
+            console.log("running")
             dispatch(setAddCart(data.cart));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
@@ -46,8 +47,9 @@ export const useCart = () => {
         dispatch(removeItemFromCart({ productId, variantId }));
         try {
             const data = await removeFromCart(productId, variantId);
+            console.log(data)
             // Sync with server response if provided
-            if (data?.cart?.items) dispatch(setCartItems(data.cart.items));
+            dispatch(removeItemFromCart({productId,variantId}));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
             // Re-fetch to restore correct state on failure
@@ -60,8 +62,8 @@ export const useCart = () => {
         // Optimistic update
         dispatch(updateItemQuantity({ productId, variantId, quantity }));
         try {
+            console.log("running update")
             const data = await updateCartItem(productId, variantId, quantity);
-            if (data?.cart?.items) dispatch(setCartItems(data.cart.items));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
             handleGetCart();

@@ -121,19 +121,19 @@ const Cart = () => {
     const { handleGetAllProducts } = useProduct();
 
     const { cartItems, loading, error } = useSelector((state) => state.cart);
-    console.log("cartItems",cartItems)
+  
     const user = useSelector((state) => state.auth?.user);
     const catalogProducts = useSelector((state) => state.product?.catalogProducts ?? []);
 
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
     const [promoError, setPromoError] = useState("");
-    const [fetchCartAgain,setFetchCartAgain] = useState(0);
+  
 
     useEffect(() => {
         handleGetCart();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fetchCartAgain]);
+    }, []);
 
     // Fetch catalog if not already loaded
     useEffect(() => {
@@ -301,8 +301,8 @@ const Cart = () => {
                                     : null;
 
                                 const stock = variant?.stock ?? product?.stock ?? 0;
-                                 console.log(product)
-                                 if(!product) setFetchCartAgain(prev => prev + 1);
+
+                               
                                 return (
                                 <div
                                     key={`${productId}-${variantId}-${idx}`}

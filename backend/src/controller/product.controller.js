@@ -228,6 +228,8 @@ async function updateOneProduct(req,res) {
       images:modifiedProductImages.length > 0 ? modifiedProductImages : product.images,
     })
 
+
+
     return res.status(200).json({
         success:true,
         message:"product updated successfully",

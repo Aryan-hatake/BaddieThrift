@@ -148,7 +148,8 @@ const Archive = () => {
   const [confirmClear, setConfirmClear] = useState(false);
 
   /* Filter logic */
-  const filtered = items.filter((item) => {
+  const filtered = items.filter((item,idx) => {
+
     const isSoldOut =  (item.variant.stock ?? 0) === 0;
     if (activeTab === "ALL_ITEMS") return true;
     if (activeTab === "AVAILABLE") return !isSoldOut;

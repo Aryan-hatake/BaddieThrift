@@ -168,8 +168,7 @@ const ProductDetails = () => {
   const { handleAddToCart } = useCart();
   const { handleAddToArchieve, handleRemoveToArchieve, handleGetArchive } = useArchieve();
 
-  const { selectedProduct: product, loading } = useSelector((s) => s.product);
-
+  
   const { loading: loadArchive } = useSelector((state) => state.archive);
   const { user } = useSelector((state) => state.auth);
   
@@ -187,12 +186,19 @@ const ProductDetails = () => {
 
 
   useEffect(() => {
-    if (id) handleProductDetails(id);
+    if (id){
+ 
+      handleProductDetails(id);
+    } 
   }, [id]);
+  
+  const { selectedProduct: product, loading } = useSelector((s) => s.product);
+  const {selectedProduct} = useSelector((s) => s.product);
 
   /* Sync selected variant from URL; auto pre-select first available when no variantId */
   useEffect(() => {
     if (!product?.variants?.length) {
+
       setSelectedVariantIdx(null);
       return;
     }
@@ -211,6 +217,7 @@ const ProductDetails = () => {
     }
   }, [product?._id, variantId]);
 
+  
   if (loading) {
     return (
       <div className="bg-[#f9f9f9] min-h-screen">
@@ -259,7 +266,15 @@ const ProductDetails = () => {
     createdAt,
   } = product;
 
-  const selectedVariant = selectedVariantIdx !== null ? variants[selectedVariantIdx] : null;
+
+
+  const selectedVariant = selectedVariantIdx !== null ? variants[selectedVariantIdx]
+   : null;
+   
+
+
+
+
 
   /* ── Variant-override logic ──────────────────────────────────────────────
      Fields that a variant CAN override (if the variant has them):
@@ -273,19 +288,19 @@ const ProductDetails = () => {
   const activeAmount = selectedVariant?.price?.priceAmount ?? amount ?? 0;
   const activeCurrency = selectedVariant?.price?.priceCurrency ?? currency ?? "USD";
   const activeStock = selectedVariant?.stock ?? stock ?? 0;
-
+  
   const symbol = currencySymbol(activeCurrency);
-
+  
   /* Images: if the selected variant has its own images use those exclusively,
-     otherwise fall back to the product's images */
+  otherwise fall back to the product's images */
   const variantImages = selectedVariant?.images?.filter(Boolean) ?? [];
   const activeImages = variantImages.length > 0 ? variantImages : images.filter(Boolean);
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
 
 
   const isSoldOut = activeStock === 0;
@@ -294,7 +309,6 @@ const ProductDetails = () => {
     const diff = (Date.now() - new Date(createdAt)) / (1000 * 60 * 60 * 24);
     return diff < 14;
   })();
-
   return (
     <div className="bg-[#f9f9f9] min-h-screen text-[#1b1b1b]">
 
@@ -402,6 +416,7 @@ const ProductDetails = () => {
               );
 
               /* Currently selected variant's attribute map */
+              
               const selectedAttr = selectedVariant?.attribute ?? {};
 
               return (
@@ -551,7 +566,7 @@ const ProductDetails = () => {
 
                 onClick={() => {
                   const isAlready = archiveItems.some((i) => (i.variant._id ?? i.variant)  === selectedVariant?._id)
-  
+                 
                   if (!user?._id) {
                     navigate("/auth/login")
                     return;

@@ -23,7 +23,7 @@ const CatalogProductCard = ({ product }) => {
 
   const thumb = images?.[0];
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency;
-  console.log(stock, "stock",title);
+
   const isSoldOut = stock === 0;
   const LowStock = stock < 25;
   const isNew = (() => {

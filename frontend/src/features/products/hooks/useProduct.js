@@ -63,7 +63,7 @@ export function useProduct() {
       try{
          dispatch(setLoading(true))
          const response = await getProductDetails(id);
-         dispatch(setSelectedProduct(response?.product ?? response))
+         dispatch(setSelectedProduct(response?.product))
       }
       catch(err){
          dispatch(setError(err?.message ?? err))
