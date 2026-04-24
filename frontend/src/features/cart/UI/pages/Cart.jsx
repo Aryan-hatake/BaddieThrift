@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useCart } from "../../hooks/useCart";
+import { useProduct } from "../../../products/hooks/useProduct";
 
 
 /* ─────────────────────────────────────────
@@ -117,9 +118,11 @@ const EmptyBag = ({ onShop }) => (
 const Cart = () => {
     const navigate = useNavigate();
     const { handleGetCart, handleRemoveFromCart, handleUpdateQuantity } = useCart();
+    const { handleGetAllProducts } = useProduct();
 
     const { cartItems, loading, error } = useSelector((state) => state.cart);
     const user = useSelector((state) => state.auth?.user);
+    const catalogProducts = useSelector((state) => state.product?.catalogProducts ?? []);
 
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
@@ -129,6 +132,14 @@ const Cart = () => {
         handleGetCart();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Fetch catalog if not already loaded
+    useEffect(() => {
+        if (catalogProducts.length === 0) {
+            handleGetAllProducts({ limit: 50 });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [catalogProducts.length]);
 
     /* ── Price helpers ── */
     const resolveItem = (item) => {
@@ -175,7 +186,7 @@ const Cart = () => {
     };
 
     const resolvedItems = cartItems.map(resolveItem);
-    console.log(resolvedItems)
+
     const subtotal = resolvedItems.reduce(
         (acc, i) => acc + i.price * i.quantity,
         0
@@ -184,6 +195,50 @@ const Cart = () => {
     const taxes = subtotal * TAX_RATE;
     const discount = promoApplied ? subtotal * 0.1 : 0; // 10% mock promo
     const total = subtotal + shipping + taxes - discount;
+
+    /* ── "You Might Also Like" — RegEx filter across catalog ── */
+    const suggestedProducts = useMemo(() => {
+        // IDs already in cart — exclude them
+        const cartProductIds = new Set(
+            resolvedItems.map((i) => String(i.productId))
+        );
+
+        // Build keyword list from cart item titles + descriptions
+        const keywords = resolvedItems
+            .flatMap((item) => {
+                const words = [];
+                if (item.title) words.push(...item.title.split(/\s+/));
+                if (item.description) words.push(...item.description.split(/\s+/));
+                return words;
+            })
+            .map((w) => w.replace(/[^a-zA-Z0-9]/g, "").trim())
+            .filter((w) => w.length > 2); // ignore tiny stop-words
+
+        // Deduplicate and build RegEx (OR of all keywords)
+        const uniqueKeywords = [...new Set(keywords)];
+        const pattern =
+            uniqueKeywords.length > 0
+                ? new RegExp(uniqueKeywords.join("|"), "i")
+                : null;
+
+        const candidates = catalogProducts.filter((p) => {
+            if (cartProductIds.has(String(p._id))) return false; // already in cart
+            if (!pattern) return true; // no keywords → include all
+            return pattern.test(p.title ?? "") || pattern.test(p.description ?? "");
+        });
+
+        // Shuffle and take up to 4
+        const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+        // If no regex matches, fall back to a random slice of the full catalog
+        if (shuffled.length === 0) {
+            return [...catalogProducts]
+                .filter((p) => !cartProductIds.has(String(p._id)))
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 4);
+        }
+        return shuffled.slice(0, 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [catalogProducts, cartItems]);
 
     const handleApplyPromo = () => {
         if (promoCode.trim().toUpperCase() === "BADDIE10") {
@@ -530,7 +585,7 @@ const Cart = () => {
                 </div>
 
                 {/* ── You Might Also Like ── */}
-                {resolvedItems.length > 0 && (
+                {resolvedItems.length > 0 && suggestedProducts.length > 0 && (
                     <section className="mt-24">
                         <h2
                             className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-10"
@@ -540,46 +595,78 @@ const Cart = () => {
                         </h2>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            {[
-                                { name: "UTILITY VEST", price: 195 },
-                                { name: "COMBAT BOOT 01", price: 550 },
-                                { name: "STUDIO LEATHER", price: 1200 },
-                                { name: "OVERSIZED COAT", price: 780 },
-                            ].map((rec) => (
-                                <button
-                                    key={rec.name}
-                                    onClick={() => navigate("/")}
-                                    className="group text-left"
-                                >
-                                    <div className="aspect-[3/4] bg-[#e8e8e8] border-2 border-black overflow-hidden mb-3">
-                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#5e5e5e] group-hover:bg-[#e2e2e2] transition-colors">
-                                            <span className="material-symbols-outlined text-4xl">
-                                                checkroom
-                                            </span>
+                            {suggestedProducts.map((product) => {
+                                // Resolve image from product or first variant
+                                const firstVariantImg =
+                                    product.variants?.[0]?.images?.find(Boolean);
+                                const firstProductImg = product.images?.find(Boolean);
+                                const imgSrc = firstVariantImg ?? firstProductImg ?? null;
+
+                                const rawAmount =
+                                    product.variants?.[0]?.price?.priceAmount ??
+                                    product.variants?.[0]?.price?.amount ??
+                                    product.price?.amount ??
+                                    0;
+                                const rawCurrency =
+                                    product.variants?.[0]?.price?.priceCurrency ??
+                                    product.variants?.[0]?.price?.currency ??
+                                    product.price?.currency ??
+                                    "USD";
+
+                                return (
+                                    <button
+                                        key={product._id}
+                                        onClick={() =>
+                                            navigate(`/product/${product._id}/${product?.variants[0]._id}`)
+                                        }
+                                        className="group text-left"
+                                    >
+                                        <div className="aspect-[3/4] bg-[#e8e8e8] border-2 border-black overflow-hidden mb-3">
+                                            {imgSrc ? (
+                                                <img
+                                                    src={imgSrc}
+                                                    alt={product.title}
+                                                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#5e5e5e] group-hover:bg-[#e2e2e2] transition-colors">
+                                                    <span className="material-symbols-outlined text-4xl">
+                                                        checkroom
+                                                    </span>
+                                                    <span
+                                                        className="text-[8px] font-black uppercase tracking-widest"
+                                                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                                                    >
+                                                        NO IMAGE
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
                                             <span
-                                                className="text-[8px] font-black uppercase tracking-widest"
+                                                className="font-black text-sm uppercase tracking-tight leading-tight line-clamp-2"
                                                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                                             >
-                                                VIEW CATALOG
+                                                {product.title}
+                                            </span>
+                                            <span
+                                                className="font-black text-sm shrink-0"
+                                                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                                            >
+                                                {sym(rawCurrency)}{Number(rawAmount).toFixed(2)}
                                             </span>
                                         </div>
-                                    </div>
-                                    <div className="flex justify-between items-start">
-                                        <span
-                                            className="font-black text-sm uppercase tracking-tight"
-                                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                                        >
-                                            {rec.name}
-                                        </span>
-                                        <span
-                                            className="font-black text-sm"
-                                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                                        >
-                                            ${rec.price}
-                                        </span>
-                                    </div>
-                                </button>
-                            ))}
+                                        {product.description && (
+                                            <p
+                                                className="mt-1 text-[10px] text-[#5e5e5e] uppercase tracking-widest font-bold line-clamp-1"
+                                                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                                            >
+                                                {product.description}
+                                            </p>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </section>
                 )}
