@@ -120,7 +120,7 @@ const Cart = () => {
     const { handleGetCart, handleRemoveFromCart, handleUpdateQuantity } = useCart();
     const { handleGetAllProducts } = useProduct();
 
-    const { cartItems, loading, error } = useSelector((state) => state.cart);
+    const { cartItems, loading, error , cartPrice } = useSelector((state) => state.cart);
   
     const user = useSelector((state) => state.auth?.user);
     const catalogProducts = useSelector((state) => state.product?.catalogProducts ?? []);
@@ -130,11 +130,6 @@ const Cart = () => {
     const [promoError, setPromoError] = useState("");
   
 
-    useEffect(() => {
-        handleGetCart();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     // Fetch catalog if not already loaded
     useEffect(() => {
         if (catalogProducts.length === 0) {
@@ -143,18 +138,10 @@ const Cart = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [catalogProducts.length]);
 
+
     /* ── Totals — computed directly from cartItems ── */
-    const subtotal = cartItems.reduce((acc, item) => {
-        const variant = item.variant ?? null;
-        const product = item.product ?? {};
-        const price = Number(
-            variant?.price?.priceAmount ??
-            variant?.price?.amount ??
-            product?.price?.amount ??
-            0
-        );
-        return acc + price * (item.quantity ?? 1);
-    }, 0);
+
+    const subtotal = cartPrice
     const shipping = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
     const taxes = subtotal * TAX_RATE;
     const discount = promoApplied ? subtotal * 0.1 : 0;
@@ -203,6 +190,10 @@ const Cart = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [catalogProducts, cartItems]);
 
+
+    useEffect(()=>{
+        handleGetCart()
+    },[])
     const handleApplyPromo = () => {
         if (promoCode.trim().toUpperCase() === "BADDIE10") {
             setPromoApplied(true);
@@ -269,7 +260,7 @@ const Cart = () => {
                         ) : (
                             cartItems.map((item, idx) => {
                                 const product   = item.product ?? {};
-                                const variant   = item.variant ?? null;
+                                const variant   = item.product.variant ?? null;
                                 const productId = product._id ?? item.product;
                                 const variantId = variant?._id ?? item.variant ?? null;
                                 const quantity  = item.quantity ?? 1;
@@ -423,7 +414,7 @@ const Cart = () => {
                                     <div className="flex justify-between font-black text-xs uppercase tracking-widest"
                                         style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                                         <span className="text-[#5e5e5e]">SUBTOTAL</span>
-                                        <span>${subtotal.toFixed(2)}</span>
+                                        <span>${subtotal}</span>
                                     </div>
 
                                     <div className="flex justify-between font-black text-xs uppercase tracking-widest"

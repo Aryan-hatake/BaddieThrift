@@ -14,7 +14,10 @@ function App() {
   const errAuth = useSelector((state) => state.auth.error);
   const errProduct = useSelector((state) => state.product.error);
   const logout = useSelector((state) => state.auth.logout);
-  const loading = useSelector((state) => state.auth.loading);
+
+
+   
+  
 
   useEffect(() => {
 

@@ -32,7 +32,7 @@ export async function addToArchive(req,res){
 
 export async function getAllArchivedProducts(req,res){
     try {
-        console.log("test")
+      
         const archivedProducts = await ArchivedProductModel.find({user:req.userId}).populate("product");
         const newArchieve = await Promise.all(archivedProducts.map(async(item)=>{
             const variant = await findVariant(item.product._id,item.variant);    
@@ -40,7 +40,7 @@ export async function getAllArchivedProducts(req,res){
             plainProduct.variant = variant;
             return plainProduct;
         }))
-        console.log(newArchieve)
+        
         res.status(200).json({message:"Archived products fetched successfully",items:newArchieve});
     }
     catch(error){

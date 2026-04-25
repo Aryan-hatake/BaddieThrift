@@ -1,11 +1,12 @@
-import { userCart, createCart, findVariant } from "../dao/cart.dao.js";
+import { userCart, createCart } from "../dao/cart.dao.js";
 import productModel from "../model/product.model.js";
 import cartModel from "../model/cart.model.js";
 
 async function getCart(req, res) {
   try {
     const cart = await userCart(req.userId);
-    if (!cart) {
+    const userCartExist = await cartModel.findOne({user:req.userId})
+    if (!userCartExist) {
       await createCart(req.userId);
       return res.status(201).json({
         success: true,
@@ -16,7 +17,7 @@ async function getCart(req, res) {
       return res.status(200).json({
         success: true,
         message: "cart fetched successfully",
-        cart,
+        cart: cart||null,
       });
     }
   } catch (err) {
@@ -47,9 +48,9 @@ async function addToCart(req, res) {
 
     const cart = await userCart(req.userId);
 
+  
 
-
-    const itemAlreadyExist = cart.items.some((e, i) => {
+    const itemAlreadyExist = cart?.items.some((e, i) => {
   
         return (
           productId === e.product._id.toString() &&
@@ -135,7 +136,7 @@ async function removeFromCart(req,res) {
     const {productId,variantId} = req.body
     const cart = await userCart(req.userId);
     
-    const query = variantId ? { _id: productId, "variants._id": variantId } : { _id: productId }
+    const query = { _id: productId, "variants._id": variantId } 
 
     const productExist = await productModel.findOne(query);
 
@@ -145,17 +146,13 @@ async function removeFromCart(req,res) {
         message:"product does not exist"
       })
     }
-    const itemExist = cart.items.some((e, i) => {
-      if (variantId) {
+    const itemExist = cart?.items.some((e, i) => {
+
         return (
           productId === e.product._id.toString() &&
           variantId === e.variant._id.toString()
         );
-      } else {
-        return (
-          productId === e.product._id.toString()
-        )
-      }
+      
     });
 
     if(!itemExist) {
@@ -166,17 +163,13 @@ async function removeFromCart(req,res) {
     }
 
     const newCart = cart.items.filter((e, i) => {
-      if (variantId) {
+
   
         return (
           productId !== e.product._id.toString() &&
-          variantId !== e.variant._id.toString()
+          variantId !== e.variant.toString()
         );
-      } else {
-        return (
-          productId !== e.product._id.toString()
-        )
-      }
+      
     });
 
     await cartModel.updateOne(
@@ -208,7 +201,7 @@ async function updateCartItem(req,res) {
     const itemExist = cart.items.some((e, i) => {
         return (
           productId === e.product._id.toString() &&
-          variantId === e.variant._id.toString()
+          variantId === e.variant.toString()
         );
     
     });
@@ -229,7 +222,7 @@ async function updateCartItem(req,res) {
 
       if (
           productId === e.product._id.toString() &&
-          variantId === e.variant._id.toString() 
+          variantId === e.variant.toString() 
       ) {
 
         newQty =
@@ -260,12 +253,5 @@ async function updateCartItem(req,res) {
   }
 }
 
-async function variant(req,res) {
-  const {productId,variantId} = req.body
 
-  const variant = await findVariant(productId,variantId)
-   
-  res.send(variant)
-  
-}
-export default { getCart, addToCart , removeFromCart , updateCartItem , variant};
+export default { getCart, addToCart , removeFromCart , updateCartItem };

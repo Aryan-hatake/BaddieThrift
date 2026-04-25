@@ -1,6 +1,6 @@
 import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
-
+import { ObjectId } from "mongodb";
 export async function createCart(userId) {
   try {
     const cart = await cartModel.create({ user: userId });
@@ -26,26 +26,69 @@ export async function findVariant(productId, variantId) {
 
 export async function userCart(userId) {
   try {
-    let cart =
-      (await cartModel.findOne({ user: userId }).populate("items.product")) ||
-      (await cartModel.create({ user: userId }));
+    let cart = await cartModel.aggregate([
+      {
+        $match: {
+          user: new ObjectId(userId),
+        },
+      },
+      {
+        $unwind: {
+          path: "$items",
+        },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "items.product",
+        },
+      },
+      {
+        $unwind: {
+          path: "$items.product",
+        },
+      },
+      {
+        $unwind: {
+          path: "$items.product.variants",
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: ["$items.variant", "$items.product.variants._id"],
+          },
+        },
+      },
+      {
+        $addFields: {
+          totalProductPrice: {
+            $multiply: [
+              "$items.quantity",
+              "$items.product.variants.price.priceAmount",
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          totalCartPrice: {
+            $sum: "$totalProductPrice",
+          },
+          currency: {
+            $first: "$items.product.variants.price.priceCurrency",
+          },
+          items: {
+            $push: "$items",
+          },
+        },
+      },
+    ]);
 
-    const newItems = await Promise.all(
-      cart.items.map(async (product) => {
-        const variant = await findVariant(
-          product?.product._id,
-          product.variant,
-        );
-        const plainProduct = product.toObject();
-        plainProduct.variant = variant;
-        return plainProduct;
-      }),
-    );
-    const newCart = cart.toObject();
-
-    newCart.items = newItems;
-
-    return newCart;
+    return cart[0];
   } catch (error) {
     throw error;
   }

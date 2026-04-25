@@ -5,8 +5,10 @@ import {
     removeItemFromCart,
     updateItemQuantity,
     setAddCart,
+    setCartPrice,
+    setCartCurrency,
 } from "../store/cart.slice";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import {
     getCart,
     addToCart,
@@ -14,14 +16,19 @@ import {
     updateCartItem,
 } from "../services/cart.api";
 
+
 export const useCart = () => {
     const dispatch = useDispatch();
+    const {cartPrice} = useSelector((state)=>state.cart)
 
     const handleGetCart = async () => {
         try {
             dispatch(setLoading(true));
             const data = await getCart();
-            dispatch(setCartItems(data.cart.items));
+            console.log(data)
+            dispatch(setCartPrice(data.cart?.totalCartPrice))
+            dispatch(setCartCurrency(data.cart?.currency))
+            dispatch(setCartItems(data.cart?.items || []));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
         } finally {
@@ -33,7 +40,7 @@ export const useCart = () => {
         try {
             dispatch(setLoading(true));
             const data = await addToCart(productId, variantId, quantity);
-    
+            console.log(data)
             dispatch(setAddCart(data.cart));
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
@@ -62,8 +69,11 @@ export const useCart = () => {
         // Optimistic update
         dispatch(updateItemQuantity({ productId, variantId, quantity }));
         try {
-
+     
             const data = await updateCartItem(productId, variantId, quantity);
+            console.log(data.cart.totalCartPrice)
+            const newPrice = Math.abs(data.cart.totalCartPrice - cartPrice)
+            console.log(newPrice)
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
             handleGetCart();
