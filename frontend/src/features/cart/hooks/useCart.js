@@ -7,6 +7,8 @@ import {
     setAddCart,
     setCartPrice,
     setCartCurrency,
+    setAddCartPrice,
+    setDeductCartPrice,
 } from "../store/cart.slice";
 import { useDispatch,useSelector } from "react-redux";
 import {
@@ -64,16 +66,16 @@ export const useCart = () => {
         }
     };
 
-    const handleUpdateQuantity = async (productId, variantId, quantity) => {
+    const handleUpdateQuantity = async (productId, variantId, quantity,price) => {
         
         // Optimistic update
         dispatch(updateItemQuantity({ productId, variantId, quantity }));
+        quantity > 0 ? dispatch(setAddCartPrice(price)) : dispatch(setDeductCartPrice(price))
+        console.log(price)
         try {
      
             const data = await updateCartItem(productId, variantId, quantity);
-            console.log(data.cart.totalCartPrice)
-            const newPrice = Math.abs(data.cart.totalCartPrice - cartPrice)
-            console.log(newPrice)
+         
         } catch (err) {
             dispatch(setError(err?.response?.data?.message ?? err.message));
             handleGetCart();

@@ -6,7 +6,7 @@ const cartSlice = createSlice({
         cartItems: [],
         loading: false,
         error: null,
-        cartPrice: null,
+        cartPrice: 0,
         cartCurrency:null
     },
     reducers: {
@@ -66,6 +66,14 @@ const cartSlice = createSlice({
         },
         setCartCurrency:(state,action)=>{
             state.cartCurrency = action.payload
+        },
+        setAddCartPrice:(state,action)=>{
+            state.cartPrice+=action.payload
+        },
+        setDeductCartPrice:(state,action)=>{
+            if(state.cartPrice - action.payload > 0){
+                state.cartPrice -= action.payload
+            }
         }
     },
 });
@@ -78,7 +86,9 @@ export const {
     updateItemQuantity,
     setAddCart,
     setCartPrice,
-    setCartCurrency
+    setCartCurrency,
+    setAddCartPrice,
+    setDeductCartPrice
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

@@ -146,6 +146,7 @@ const Cart = () => {
     const taxes = subtotal * TAX_RATE;
     const discount = promoApplied ? subtotal * 0.1 : 0;
     const total = subtotal + shipping + taxes - discount;
+    console.log(total , subtotal  )
 
     /* ── "You Might Also Like" — RegEx filter across catalog ── */
     const suggestedProducts = useMemo(() => {
@@ -353,15 +354,16 @@ const Cart = () => {
 
                                         {/* Bottom — stepper + remove */}
                                         <div className="flex flex-col xs:flex-row justify-between items-start xs:items-end gap-4">
+                  
                                             <QuantityStepper
                                                 quantity={quantity}
                                                 onDecrease={() =>
                                                     quantity > 1
-                                                        ? handleUpdateQuantity(productId, variantId, -1)
+                                                        ? handleUpdateQuantity(productId, variantId, -1,price)
                                                         : handleRemoveFromCart(productId, variantId)
                                                 }
                                                 onIncrease={() =>
-                                                    handleUpdateQuantity(productId, variantId, 1)
+                                                    handleUpdateQuantity(productId, variantId, 1,price)
                                                 }
                                             />
 
