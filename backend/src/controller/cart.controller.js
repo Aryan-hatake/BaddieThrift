@@ -226,7 +226,7 @@ async function updateCartItem(req,res) {
       ) {
 
         newQty =
-          e.quantity + quantity < productVariant.stock
+          e.quantity + quantity <= productVariant.stock
             ? (e.quantity += quantity)
             : e.quantity;
       }

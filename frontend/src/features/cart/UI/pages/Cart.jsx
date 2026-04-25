@@ -146,7 +146,7 @@ const Cart = () => {
     const taxes = subtotal * TAX_RATE;
     const discount = promoApplied ? subtotal * 0.1 : 0;
     const total = subtotal + shipping + taxes - discount;
-    console.log(total , subtotal  )
+   
 
     /* ── "You Might Also Like" — RegEx filter across catalog ── */
     const suggestedProducts = useMemo(() => {
