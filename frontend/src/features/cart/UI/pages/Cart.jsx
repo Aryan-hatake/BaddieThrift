@@ -233,12 +233,20 @@ const Cart = () => {
             response.razorpay_signature,
           );
 
-          if(succeed.success){
-
-            alert("Payment Successful!");
-          }
-          else{
-            alert("payment failed")
+          if (succeed.success) {
+            navigate(`/cart/${user._id}/order-success`, {
+              state: {
+                paymentData: {
+                  orderId:   succeed.order?.orderId  ?? response.razorpay_order_id,
+                  paymentId: succeed.order?.paymentId ?? response.razorpay_payment_id,
+                  amount:    succeed.order?.amount   ?? order.amount,
+                  currency:  succeed.order?.currency ?? order.currency,
+                  createdAt: succeed.order?.createdAt ?? new Date().toISOString(),
+                },
+              },
+            });
+          } else {
+            alert("Payment verification failed. Please contact support.");
           }
         }
       },

@@ -8,6 +8,7 @@ import ProductDetails from "../features/products/UI/pages/ProductDetails";
 import Archive from "../features/products/UI/pages/Archive";
 import Protected from "../features/auth/UI/components/Protected";
 import Cart from "../features/cart/UI/pages/Cart";
+import OrderSuccess from "../features/cart/UI/pages/OrderSuccess";
 import ProductLayout from "../layout/ProductLayout";
 import AuthLayout from "../layout/AuthLayout";
 import SellerLayout from "../layout/SellerLayout";
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         path: "archive",
         element: <Archive />,
+      },
+      {
+        path: "cart/:user/order-success",
+        element: <OrderSuccess />,
       },
     ]
   },

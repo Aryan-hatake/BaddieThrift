@@ -10,6 +10,8 @@ import {
   setAddCartPrice,
   setDeductCartPrice,
   setCartId,
+  setOrder,
+  clearCart,
 } from "../store/cart.slice";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -104,6 +106,8 @@ export const useCart = () => {
   }
   const handleVerifyOrder = async (razorpayOrderId,razorPaymentId,razorpaySignature)=>{
     const data = await verifyOrder(razorpayOrderId,razorPaymentId,razorpaySignature)
+    dispatch(setOrder(data.order));
+    dispatch(clearCart())
     return data
   }
   return {
