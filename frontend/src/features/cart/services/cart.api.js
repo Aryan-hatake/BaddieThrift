@@ -34,3 +34,14 @@ export async function updateCartItem(productId, variantId, quantity) {
     });
     return res.data;
 }
+
+export async function createOrder(amount,currency,cartId) {
+     const res = await cartInstance.post("/payment/createOrder",{amount,currency,cartId})
+
+     return res.data
+}
+
+export async function verifyOrder(razorpayOrderId,razorpayPaymentId,razorpaySignature) {
+    const res = await cartInstance.post("/payment/verifyOrder",{razorpayOrderId,razorpayPaymentId,razorpaySignature})
+    return res.data
+}

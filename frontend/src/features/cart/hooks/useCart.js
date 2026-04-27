@@ -9,6 +9,7 @@ import {
   setCartCurrency,
   setAddCartPrice,
   setDeductCartPrice,
+  setCartId,
 } from "../store/cart.slice";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -16,6 +17,8 @@ import {
   addToCart,
   removeFromCart,
   updateCartItem,
+  createOrder,
+  verifyOrder,
 } from "../services/cart.api";
 
 export const useCart = () => {
@@ -26,7 +29,8 @@ export const useCart = () => {
     try {
       dispatch(setLoading(true));
       const data = await getCart();
-      console.log(data);
+  
+      dispatch(setCartId(data?.cart?._id))
       dispatch(setCartPrice(data.cart?.totalCartPrice));
       dispatch(setCartCurrency(data.cart?.currency));
       dispatch(setCartItems(data.cart?.items || []));
@@ -81,7 +85,8 @@ export const useCart = () => {
 
     try {
       const data = await updateCartItem(productId, variantId, quantity);
-
+      
+      console.log(data.cart[0].quantity , item.quantity)
       if (item.quantity !== data?.cart[0]?.quantity) {
         quantity > 0
           ? dispatch(setAddCartPrice(price))
@@ -92,11 +97,21 @@ export const useCart = () => {
       handleGetCart();
     }
   };
-
+   
+  const handleCreateOrder = async(amount,currency,cartId)=>{
+     const data = await createOrder(amount,currency,cartId)
+     return data
+  }
+  const handleVerifyOrder = async (razorpayOrderId,razorPaymentId,razorpaySignature)=>{
+    const data = await verifyOrder(razorpayOrderId,razorPaymentId,razorpaySignature)
+    return data
+  }
   return {
     handleGetCart,
     handleAddToCart,
     handleRemoveFromCart,
     handleUpdateQuantity,
+    handleCreateOrder,
+    handleVerifyOrder
   };
 };

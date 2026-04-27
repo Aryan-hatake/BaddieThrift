@@ -20,6 +20,12 @@ if(!process.env.IMAGEKIT_PRIVATE_KEY){
 if(!process.env.DOMAIN){
     throw Error("DOMAIN NOT PROVIDED")
 }
+if(!process.env.RAZORPAY_KEY){
+     throw Error("RAZORPAY KEY NOT PROVIDED")
+}
+if(!process.env.RAZORPAY_SECRET){
+     throw Error("RAZORPAY SECRET NOT PROVIDED")
+}
 
 const config = {
     MongoURI : process.env.MONGO_URI,
@@ -27,7 +33,10 @@ const config = {
     GoogleClientID : process.env.GOOGLE_CLIENT_ID,
     GoogleClientSecret : process.env.GOOGLE_CLIENT_SECRET,
     JWTSecret : process.env.JWT_SECRET,
-    ImageKitPrivateKey : process.env.IMAGEKIT_PRIVATE_KEY
+    ImageKitPrivateKey : process.env.IMAGEKIT_PRIVATE_KEY,
+    RazorPay_Key:process.env.RAZORPAY_KEY,
+    RazorPay_Secret:process.env.RAZORPAY_SECRET
+
 }
 
 export default config

@@ -7,7 +7,8 @@ const cartSlice = createSlice({
         loading: false,
         error: null,
         cartPrice: 0,
-        cartCurrency:null
+        cartCurrency:null,
+        cartId:null
     },
     reducers: {
         setCartItems: (state, action) => {
@@ -17,7 +18,7 @@ const cartSlice = createSlice({
             state.loading = action.payload;
         },
         setAddCart: (state, action) => {
-
+            console.log("i am runing")
             const existingItem = state.cartItems.find((item)=>{
                if(item.product._id === action.payload.product._id && item.variant._id === action.payload.variant._id){
                     item.quantity += action.payload.quantity;
@@ -74,6 +75,9 @@ const cartSlice = createSlice({
             if(state.cartPrice - action.payload > 0){
                 state.cartPrice -= action.payload
             }
+        },
+        setCartId:(state,action)=>{
+            state.cartId = action.payload
         }
     },
 });
@@ -88,7 +92,8 @@ export const {
     setCartPrice,
     setCartCurrency,
     setAddCartPrice,
-    setDeductCartPrice
+    setDeductCartPrice,
+    setCartId
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

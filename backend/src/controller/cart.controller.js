@@ -1,6 +1,10 @@
 import { userCart, createCart } from "../dao/cart.dao.js";
 import productModel from "../model/product.model.js";
 import cartModel from "../model/cart.model.js";
+import paymentModel from "../model/payment.model.js";
+import { createOrderService , verifyOrderService } from "../services/payment.service.js";
+
+
 
 async function getCart(req, res) {
   try {
@@ -253,5 +257,75 @@ async function updateCartItem(req,res) {
   }
 }
 
+async function createOrder(req,res) {
+  const {amount,currency,cartId} = req.body
+    console.log(amount,currency,cartId)
+    const cartExist  = await cartModel.findOne({_id:cartId,user:req.userId})
+    
+    if(!cartExist){
+      return res.status(404).json({
+        success:false,
+        message:"cart does not exist"
+      })
+    }
+    
 
-export default { getCart, addToCart , removeFromCart , updateCartItem };
+
+    const order = await createOrderService(amount,currency)
+    
+    const initialPayment = await paymentModel.create({
+      user:req.userId,
+      cart:cartId,
+      orderId:order.id,
+      amount:order.amount,
+      paymentId:"pending",
+      signature:"",
+      currency:order.currency,
+      status:"pending"
+    })
+
+    res.status(201).json({
+       success:true,
+       message:"order created successfully",
+       order,
+       initialPayment
+    })
+}
+
+async function verifyOrder(req,res) {
+
+   const {razorpayOrderId,razorpayPaymentId,razorpaySignature} = req.body
+  console.log(razorpayPaymentId)
+   const orderExist = await paymentModel.findOne({user:req.userId,orderId:razorpayOrderId})
+   
+    if(!orderExist){
+      return res.status(404).json({
+         success:false,
+         message:"order id does not exist"
+      })
+    }
+   
+  const validTransaction = verifyOrderService(razorpayOrderId,razorpayPaymentId,razorpaySignature)
+
+  if(!validTransaction){
+    return res.status(400).json({
+      success:false,
+      message:"invalid transaction"
+    })
+  }
+  console.log(orderExist.paymentId," payment id ",razorpayPaymentId , typeof razorpayPaymentId )
+  orderExist.paymentId = razorpayPaymentId
+  orderExist.signature = razorpaySignature
+  orderExist.status = "success"
+  await orderExist.save()
+
+  res.status(200).json({
+    success:true,
+    message:`transaction completed your paymentId: ${orderExist.paymentId}`
+  })
+
+
+
+}
+
+export default { getCart, addToCart , removeFromCart , updateCartItem , createOrder,verifyOrder};
